@@ -22,6 +22,14 @@ if (!document.getElementById('mention-suggestions')) {
     inputArea.appendChild(mentionBox);
 }
 
+const PARAMETRIC_CATALOG = [
+    { name: 'cube' }, { name: 'box' },
+    { name: 'sphere' }, { name: 'cylinder' },
+    { name: 'cone' }, { name: 'circle' },
+    { name: 'ellipse' }, { name: 'plane' },
+    { name: 'torus' }
+];
+
 export function initChatLogic() {
     // Screenshot Button
     screenshotBtn.addEventListener('click', handleScreenshot);
@@ -133,7 +141,18 @@ function checkForMention(text, cursorIndex) {
 
     if (currentWord.startsWith('@')) {
         const query = currentWord.slice(1).toLowerCase();
-        showMentionSuggestions(query);
+        
+        // Context Awareness: Check the command at the start of input
+        const firstWord = words[0] ? words[0].toLowerCase() : '';
+        let context = 'scene'; // Default: Scene objects
+        
+        if (firstWord === '/kbe_model') {
+            context = 'kbe';
+        } else if (['/parametric', '/parameteric', '/addshape'].includes(firstWord)) {
+            context = 'parametric';
+        }
+        
+        showMentionSuggestions(query, context);
     } else if (currentWord.startsWith('/')) {
         const query = currentWord.slice(1).toLowerCase();
         showCommandSuggestions(query);
@@ -143,7 +162,6 @@ function checkForMention(text, cursorIndex) {
 }
 
 function showCommandSuggestions(query) {
-    // Get command list from commands.js
     const commands = getCommandList();
     const filtered = commands.filter(c => c.cmd.toLowerCase().startsWith('/' + query));
 
@@ -190,50 +208,55 @@ function applyCommand(cmdStr) {
     hideMentionSuggestions();
 }
 
-function showMentionSuggestions(query) {
-    const objects = getTaggableObjects();
-    const filteredScene = objects.filter(o => o.name.toLowerCase().includes(query));
-    
-    // Filter KBE catalog assets
-    const filteredKBE = KBE_ASSETS.filter(a => a.name.toLowerCase().includes(query));
+function showMentionSuggestions(query, context) {
+    mentionBox.innerHTML = '';
+    mentionBox.style.display = 'none';
+    let hasItems = false;
 
-    if (filteredScene.length === 0 && filteredKBE.length === 0) {
-        hideMentionSuggestions();
-        return;
+    if (context === 'kbe') {
+        // KBE Context: Show only KBE catalog assets
+        const filtered = KBE_ASSETS.filter(a => a.name.toLowerCase().includes(query));
+        filtered.forEach(asset => {
+             createMentionItem(asset.name, 'book-open', '#f59e0b', 'Catalog', () => {
+                 applyMention({ name: asset.name, isCatalog: true });
+             });
+             hasItems = true;
+        });
+    } else if (context === 'parametric') {
+        // Parametric Context: Show primitive shapes
+        const filtered = PARAMETRIC_CATALOG.filter(p => p.name.toLowerCase().includes(query));
+        filtered.forEach(item => {
+             createMentionItem(item.name, 'box-select', '#8b5cf6', 'Parametric', () => {
+                 applyMention({ name: item.name, isParametricType: true });
+             });
+             hasItems = true;
+        });
+    } else {
+        // Scene Context: Show objects in the scene (for tools like /move, /delete)
+        const objects = getTaggableObjects();
+        const filtered = objects.filter(o => o.name.toLowerCase().includes(query));
+        filtered.forEach(obj => {
+             createMentionItem(obj.name, 'box', '#3b82f6', 'Object', () => {
+                 applyMention(obj);
+             });
+             hasItems = true;
+        });
     }
 
-    mentionBox.innerHTML = '';
-    mentionBox.style.display = 'block';
+    if (hasItems) {
+        mentionBox.style.display = 'block';
+        if (window.lucide) window.lucide.createIcons({ root: mentionBox });
+    } else {
+        hideMentionSuggestions();
+    }
+}
 
-    // 1. Scene Objects
-    filteredScene.forEach(obj => {
-        const div = document.createElement('div');
-        div.className = 'mention-item';
-        div.innerHTML = `<i data-lucide="box"></i> ${obj.name}`;
-        
-        div.addEventListener('click', () => {
-             applyMention(obj);
-        });
-        
-        mentionBox.appendChild(div);
-    });
-
-    // 2. Catalog Assets (KBE)
-    filteredKBE.forEach(asset => {
-        const div = document.createElement('div');
-        div.className = 'mention-item';
-        // Distinct styling for catalog items
-        div.innerHTML = `<i data-lucide="book-open" style="color:#f59e0b;"></i> ${asset.name} <span style="font-size:0.7em; color:#999; margin-left:auto">Catalog</span>`;
-        
-        div.addEventListener('click', () => {
-             // Pass a special object to applyMention indicating it is a catalog item
-             applyMention({ name: asset.name, isCatalog: true });
-        });
-        
-        mentionBox.appendChild(div);
-    });
-
-    if (window.lucide) window.lucide.createIcons({ root: mentionBox });
+function createMentionItem(name, icon, color, subText, onClick) {
+    const div = document.createElement('div');
+    div.className = 'mention-item';
+    div.innerHTML = `<i data-lucide="${icon}" style="color:${color};"></i> ${name} <span style="font-size:0.7em; color:#999; margin-left:auto">${subText}</span>`;
+    div.addEventListener('click', onClick);
+    mentionBox.appendChild(div);
 }
 
 function hideMentionSuggestions() {
@@ -249,13 +272,14 @@ function applyMention(obj) {
     const lastSpace = textBefore.lastIndexOf(' ');
     const startIdx = lastSpace === -1 ? 0 : lastSpace + 1;
     
+    // Always insert with @ prefix as requested
     const newText = text.slice(0, startIdx) + '@' + obj.name + ' ' + text.slice(cursor);
     chatInput.value = newText;
     chatInput.focus();
     hideMentionSuggestions();
 
-    // Trigger Snapshot logic ONLY if it is a scene object (has .object property and not isCatalog)
-    if (!obj.isCatalog && obj.object) {
+    // Trigger Snapshot logic ONLY if it is a specific scene object (and not a catalog/type item)
+    if (!obj.isCatalog && !obj.isParametricType && obj.object) {
         const snapshot = captureComponentSnapshot(obj.object);
         if (snapshot) {
             appState.attachedImages.push(snapshot);

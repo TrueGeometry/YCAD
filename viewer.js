@@ -67,8 +67,7 @@ export async function initThreeJS() {
     appState.renderer = new THREE.WebGLRenderer({ 
         canvas: designCanvas, 
         antialias: true, 
-        preserveDrawingBuffer: true,
-        logarithmicDepthBuffer: true // Reduces z-fighting
+        preserveDrawingBuffer: true
     });
     appState.renderer.setSize(displayArea.clientWidth, displayArea.clientHeight);
     appState.renderer.setPixelRatio(window.devicePixelRatio);
@@ -214,8 +213,10 @@ export function setTransformMode(mode) {
     if (appState.transformControls) {
         appState.transformControls.setMode(mode);
         // Highlight active button
-        document.getElementById('translate-btn').classList.toggle('active-mode', mode === 'translate');
-        document.getElementById('rotate-btn').classList.toggle('active-mode', mode === 'rotate');
+        const transBtn = document.getElementById('translate-btn');
+        const rotBtn = document.getElementById('rotate-btn');
+        if (transBtn) transBtn.classList.toggle('active-mode', mode === 'translate');
+        if (rotBtn) rotBtn.classList.toggle('active-mode', mode === 'rotate');
     }
 }
 
@@ -299,28 +300,49 @@ export function getTaggableObjects() {
     if (!appState.scene) return list;
     
     appState.scene.traverse((child) => {
-        // 1. Content Roots (Loaded Models)
-        const isModel = child.name === 'loaded_glb' || child.name === 'fallback_cube';
-        
-        // 2. Work Features (Planes, Axes, Points)
-        // Check for specific userData types assigned in origin.js
-        const isWorkFeature = child.userData && (
-            child.userData.type === 'WorkPlane' || 
-            child.userData.type === 'WorkAxis' || 
-            child.userData.type === 'WorkPoint'
-        );
+        // Exclude internal helpers and system objects
+        if (child.name === 'GridHelper' || child.name === 'Origin' || child.name === 'Work Features') return;
+        if (child.type.includes('Light') || child.type.includes('Camera') || child.type.includes('Control')) return;
+        if (child.type === 'LineSegments' || child.type === 'Line') return;
 
-        if (isModel || isWorkFeature) {
+        // Interactive Roots
+        // 1. Loaded GLB Root
+        if (child.name === 'loaded_glb' || child.name === 'fallback_cube') {
              let rawName = child.userData.filename || child.name || 'Object';
-             const taggableName = rawName.replace(/\s+/g, '_');
-             
-             list.push({
-                 name: taggableName, 
-                 uuid: child.uuid,
-                 object: child
-             });
+             list.push({ name: rawName.replace(/\s+/g, '_'), uuid: child.uuid, object: child });
+             // Continue traversal to find children if any are interactive (though roots usually suffice)
+        }
+        
+        // 2. Parametric Shapes (direct children meshes)
+        if (child.userData && child.userData.isParametric) {
+             let rawName = child.name;
+             list.push({ name: rawName.replace(/\s+/g, '_'), uuid: child.uuid, object: child });
+        }
+
+        // 3. Clones and Patterns (often just Meshes or Groups added to scene)
+        if (child.parent === appState.scene && (child.isMesh || child.isGroup)) {
+             // Avoid adding duplicates if already caught by loaded_glb check
+             if (child.name !== 'loaded_glb' && child.name !== 'fallback_cube' && (!child.userData || !child.userData.isParametric)) {
+                 let rawName = child.name || 'Object';
+                 list.push({ name: rawName.replace(/\s+/g, '_'), uuid: child.uuid, object: child });
+             }
         }
     });
+    
+    // Also explicitly add Work Features
+    const origin = appState.scene.getObjectByName("Origin");
+    if(origin) {
+        origin.children.forEach(c => {
+             list.push({ name: c.name.replace(/\s+/g, '_'), uuid: c.uuid, object: c });
+        });
+    }
+    const wf = appState.scene.getObjectByName("Work Features");
+    if(wf) {
+        wf.children.forEach(c => {
+             list.push({ name: c.name.replace(/\s+/g, '_'), uuid: c.uuid, object: c });
+        });
+    }
+
     return list;
 }
 

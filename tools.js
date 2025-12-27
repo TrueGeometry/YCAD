@@ -62,8 +62,8 @@ export function deactivateTools() {
     measurementPoints = [];
     
     // Re-attach gizmo to current object if it exists
-    if (appState.currentDisplayObject) {
-        attachTransformControls(appState.currentDisplayObject);
+    if (appState.selectedObject) {
+        attachTransformControls(appState.selectedObject);
     }
 }
 
@@ -82,7 +82,9 @@ export function resetWireframe() {
 }
 
 export function toggleBoundingBox() {
-    if (!appState.currentDisplayObject) return;
+    const target = appState.selectedObject || appState.currentDisplayObject;
+    if (!target) return;
+
     if (boundsHelper) {
         appState.scene.remove(boundsHelper);
         boundsHelper = null;
@@ -90,7 +92,7 @@ export function toggleBoundingBox() {
         addMessageToChat('system', 'Bounding Box hidden.');
         return;
     }
-    const box = new THREE.Box3().setFromObject(appState.currentDisplayObject);
+    const box = new THREE.Box3().setFromObject(target);
     boundsHelper = new THREE.Box3Helper(box, 0xffff00);
     appState.scene.add(boundsHelper);
     document.getElementById('bounds-btn').classList.add('active-mode');
@@ -126,37 +128,85 @@ export function onCanvasClick(event) {
             }
         }
     } else {
-        // If NO tool is active, perform Selection logic
+        // Selection Logic
         const intersects = raycaster.intersectObjects(appState.scene.children, true);
-        // Filter out helpers (Grid, TransformControls, etc.)
+        
         const hit = intersects.find(i => {
-            // Traverse up to see if it's part of a loaded model
             let obj = i.object;
+            
+            // 1. Work Features (Plane/Axis/Point) are always selectable
+            if (obj.userData && (obj.userData.type === 'WorkPlane' || obj.userData.type === 'WorkAxis' || obj.userData.type === 'WorkPoint')) {
+                 return true;
+            }
+
+            // 2. Traverse up to find a valid Root Object (Model, Pattern Clone, etc.)
             while(obj) {
-                if (obj.name === 'loaded_glb' || obj.name === 'fallback_cube') return true;
-                if (obj.type === 'TransformControlsPlane') return false; // Don't select the gizmo itself
+                // Check if we hit the Scene root (meaning `obj` is a direct child of Scene)
+                if (obj.parent && obj.parent.type === 'Scene') {
+                     // Filter out system helpers
+                     const n = obj.name || '';
+                     const t = obj.type || '';
+                     
+                     if (n === 'GridHelper' || n === 'Origin' || n === 'Work Features') return false;
+                     if (t === 'TransformControls') return false;
+                     if (t.includes('Light')) return false;
+                     if (t.includes('Helper')) return false;
+                     if (t.includes('Camera')) return false;
+                     
+                     return true; // Valid user object
+                }
+                
+                // Don't select the gizmo parts
+                if (obj.type === 'TransformControlsPlane' || obj.type === 'TransformControlsGizmo') return false; 
+                
                 obj = obj.parent;
             }
             return false;
         });
 
         if (hit) {
-            let rootObj = hit.object;
-            while(rootObj.parent && rootObj.parent.type !== 'Scene' && rootObj.name !== 'loaded_glb') {
-                rootObj = rootObj.parent;
+            let target = hit.object;
+            
+            // Determine the "selectable root" for this hit
+            
+            // Check if it belongs to a user Model/Group
+            let p = target;
+            let modelRoot = null;
+            while(p && p.parent) {
+                if (p.parent.type === 'Scene') {
+                     const n = p.name || '';
+                     // Ensure it's not a system group
+                     if (n !== 'Origin' && n !== 'Work Features' && !p.type.includes('Helper') && !p.type.includes('Control')) {
+                         modelRoot = p;
+                     }
+                     break;
+                }
+                p = p.parent;
+            }
+
+            if (modelRoot) {
+                target = modelRoot;
+            } else {
+                // If no model root found (e.g. Work Feature inside group), traverse up to the Group child.
+                let curr = hit.object;
+                while (curr.parent && curr.parent.name !== 'Origin' && curr.parent.name !== 'Work Features' && curr.parent.type !== 'Scene') {
+                    curr = curr.parent;
+                }
+                target = curr;
             }
             
-            attachTransformControls(rootObj);
-            appState.currentDisplayObject = rootObj; 
-            
-            // Sync Tree
-            highlightInTree(rootObj);
+            attachTransformControls(target);
+            appState.currentDisplayObject = target; // Update "Active" object
+            appState.selectedObject = target;       // Update "Selected" object explicitly
+            highlightInTree(target);
             
         } else {
-            // Clicked empty space
+            // Clicked empty space: Deselect All
             attachTransformControls(null);
-            // Optional: clear tree selection
-            highlightInTree({ uuid: null });
+            appState.selectedObject = null;
+            // Note: We keep currentDisplayObject as the last loaded model context if needed, 
+            // but for editing commands relying on selection, selectedObject being null handles safety.
+            highlightInTree(null);
         }
     }
 }
