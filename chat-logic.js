@@ -39,6 +39,16 @@ export function initChatLogic() {
     chatInput.addEventListener('keydown', (event) => {
         if (event.key === 'Enter' && !event.shiftKey) {
             event.preventDefault();
+            
+            // Auto-select if only one suggestion remains
+            if (mentionBox.style.display === 'block') {
+                const items = mentionBox.querySelectorAll('.mention-item');
+                if (items.length === 1) {
+                    items[0].click();
+                    return;
+                }
+            }
+
             handleMessageSend();
         }
     });
