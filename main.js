@@ -10,6 +10,7 @@ import { addMessageToChat } from './ui.js';
 import { initTrends } from './trends.js';
 import { initChatLogic } from './chat-logic.js';
 import { bindGlobalEvents } from './events.js';
+import { executeCommand } from './commands.js'; // Import executeCommand
 
 // --- Initialization ---
 
@@ -36,7 +37,13 @@ appState.globalTxtValue = urlParams.get('txt');
         const initialQuery = urlParams.get('query');
         if (initialQuery) {
             addMessageToChat('user', initialQuery);
-            await sendMessage(initialQuery);
+            
+            // Check if initial query is a command
+            if (initialQuery.trim().startsWith('/')) {
+                await executeCommand(initialQuery);
+            } else {
+                await sendMessage(initialQuery);
+            }
         } else {
              if (appState.currentDisplayObject) {
                  addMessageToChat('agent', "Hello! Describe the "+(appState.globalTxtValue || "part")+" you'd like to design.");

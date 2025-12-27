@@ -262,12 +262,26 @@ function handleMessageSend() {
     const message = chatInput.value.trim();
     
     if (message) {
-         // Check for commands
+         // 1. Check for explicit commands
          if (message.startsWith('/')) {
              executeCommand(message);
              chatInput.value = '';
              hideMentionSuggestions();
              return;
+         }
+
+         // 2. Check for implicit KBE Model load (shorthand: just @ModelName)
+         // Matches "@SomeModel" exactly, ignoring surrounding whitespace
+         const kbeMatch = message.match(/^@([\w\d_-]+)$/);
+         if (kbeMatch) {
+             const potentialName = kbeMatch[1];
+             const isKBE = KBE_ASSETS.some(a => a.name.toLowerCase() === potentialName.toLowerCase());
+             if (isKBE) {
+                 executeCommand(`/kbe_model @${potentialName}`);
+                 chatInput.value = '';
+                 hideMentionSuggestions();
+                 return;
+             }
          }
 
          // --- Check for multiple mentions to create a group shot ---

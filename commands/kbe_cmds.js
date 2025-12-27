@@ -2,6 +2,7 @@
 import { addMessageToChat } from '../ui.js';
 import { loadAndDisplayGLB } from '../loader.js';
 import { KBE_ASSETS } from '../kbe_data.js';
+import { appState } from '../state.js';
 
 // Base URL for KBE assets (assuming a standard hosted location)
 const KBE_BASE_URL = "https://s3-us-west-2.amazonaws.com/pion.truegeometry.com/geometryProgram/kbe_assets/";
@@ -20,6 +21,9 @@ export const kbeCommands = {
             const match = KBE_ASSETS.find(asset => asset.name.toLowerCase() === cleanArg.toLowerCase());
 
             if (match) {
+                // Update the global text context so the AI knows what we are working on
+                appState.globalTxtValue = match.name;
+
                 addMessageToChat('agent', `<b>Found Design: ${match.name}</b><br>${match.description}`);
                 
                 // Construct URL
