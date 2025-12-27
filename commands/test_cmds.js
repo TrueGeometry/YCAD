@@ -117,6 +117,13 @@ export function getTestCommands(executor) {
                     { cmd: '/move 17 5 0', delay: 3000, narration: txt.col_trigger }, 
                     { cmd: '/move 5 5 0', delay: 2000, narration: txt.col_clear },
                     { cmd: '/collision', delay: 1000, narration: txt.col_disable },
+
+                    // Test Annotations
+                    // Uses the currently selected object (the main model from the move command)
+                    { cmd: '/annotate Main_Assy', delay: 2000, narration: txt.annot_add },
+                    { cmd: '/hideannotations', delay: 1500, narration: txt.annot_hide },
+                    { cmd: '/showannotations', delay: 1500, narration: txt.annot_show },
+                    { cmd: '/annotate clear', delay: 1500, narration: txt.annot_clear },
                     
                     // Test Feature Tree, Properties, and Deletion
                     { cmd: '/tree', delay: 1500, narration: txt.tree_show },
@@ -124,6 +131,10 @@ export function getTestCommands(executor) {
                     { cmd: '/delprop MaterialRef', delay: 2000, narration: txt.prop_del },
                     { cmd: '/delete', delay: 2000, narration: txt.obj_del },
                     { cmd: '/tree', delay: 1000, narration: txt.tree_hide },
+
+                    // Test Session Save
+                    // Placed at the end to generate the artifact without interrupting flow
+                    { cmd: '/save', delay: 2000, narration: txt.save_session },
 
                     // Final View adjustment
                     { cmd: '/view iso', delay: 1500, narration: txt.final_iso },

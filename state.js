@@ -31,5 +31,9 @@ export const appState = {
     initialObjectState: {},
     currentObjectState: {},
     historyStates: [],
-    historyCount: 0
+    historyCount: 0,
+
+    // Session Recording
+    actionLog: [], // Stores { type, payload, timestamp }
+    isReplaying: false // Flag to prevent recording while restoring
 };

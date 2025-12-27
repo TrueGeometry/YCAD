@@ -9,6 +9,7 @@ import { analyticsCommands } from './commands/analytics_cmds.js';
 import { editCommands } from './commands/edit_cmds.js';
 import { viewCommands } from './commands/view_cmds.js';
 import { getTestCommands } from './commands/test_cmds.js';
+import { recordAction } from './recorder.js'; // Import recorder
 
 const COMMAND_REGISTRY = {
     ...originCommands,
@@ -45,7 +46,7 @@ export function getCommandList() {
         .map(([key, val]) => ({ cmd: key, desc: val.desc }));
 }
 
-export function executeCommand(input) {
+export async function executeCommand(input) {
     const parts = input.trim().split(/\s+/);
     const cmd = parts[0].toLowerCase();
     const argRaw = input.substring(cmd.length).trim();
@@ -55,7 +56,12 @@ export function executeCommand(input) {
         let def = COMMAND_REGISTRY[cmd];
         if (def.alias) def = COMMAND_REGISTRY[def.alias];
         
-        def.execute(argRaw);
+        // Execute (support async commands)
+        await def.execute(argRaw);
+        
+        // Record the command if successful
+        recordAction('cmd', input);
+        
         return true;
     } else {
         addMessageToChat('system', `⚠️ Unknown command: ${cmd}`);

@@ -2,6 +2,8 @@
 import { setCameraView, fitGeometryView } from '../viewer.js';
 import { toggleFeatureTree } from '../tree.js';
 import { addMessageToChat } from '../ui.js';
+import { resolveTarget } from './utils.js';
+import { addAnnotation, toggleAnnotations, clearAnnotations } from '../annotation.js';
 
 export const viewCommands = {
     '/view': {
@@ -25,5 +27,48 @@ export const viewCommands = {
         execute: () => {
             toggleFeatureTree();
         }
+    },
+    '/annotate': {
+        desc: 'Annotate object (@Obj text) or toggle (on/off/clear)',
+        execute: (argRaw) => {
+            const args = argRaw.trim().split(/\s+/);
+            const cmd = args[0].toLowerCase();
+            
+            // Sub-commands
+            if (cmd === 'off') {
+                toggleAnnotations('off');
+                return;
+            } else if (cmd === 'on') {
+                toggleAnnotations('on');
+                return;
+            } else if (cmd === 'clear') {
+                clearAnnotations();
+                return;
+            }
+            
+            // Annotation creation: /annotate @Obj Text
+            const { object, name } = resolveTarget(argRaw);
+            
+            // Extract text: Remove the @Mention part
+            const text = argRaw.replace(/@[\w\d_-]+/, '').trim();
+            
+            if (object) {
+                if (!text) {
+                    addMessageToChat('system', 'Usage: /annotate @Object Label Text');
+                } else {
+                    addAnnotation(object, text);
+                }
+            } else {
+                addMessageToChat('system', '⚠️ Object not found. Usage: /annotate @Object Label Text');
+            }
+        }
+    },
+    '/hideannotations': {
+        desc: 'Hide all annotations',
+        execute: () => { toggleAnnotations('off'); }
+    },
+    '/showannotations': {
+        desc: 'Show all annotations',
+        execute: () => { toggleAnnotations('on'); }
     }
 };

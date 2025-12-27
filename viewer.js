@@ -4,11 +4,13 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { TransformControls } from 'three/addons/controls/TransformControls.js';
+import { CSS2DRenderer } from 'three/addons/renderers/CSS2DRenderer.js'; // Import CSS2D
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { appState } from './state.js';
 import { loadAndDisplayGLB } from './loader.js';
 import { initCollisions, onDragStart, onDragMove, onDragEnd } from './collisions.js'; 
-import { initOrigin } from './origin.js'; // Import Origin init
+import { initOrigin } from './origin.js';
+import { recordAction } from './recorder.js'; // Import recorder
 
 const designCanvas = document.getElementById('design-canvas');
 const displayArea = document.getElementById('design-display-area');
@@ -78,6 +80,14 @@ export async function initThreeJS() {
     appState.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     appState.renderer.toneMappingExposure = 1.0;
 
+    // --- CSS2D Renderer (Annotations) ---
+    appState.labelRenderer = new CSS2DRenderer();
+    appState.labelRenderer.setSize(displayArea.clientWidth, displayArea.clientHeight);
+    appState.labelRenderer.domElement.style.position = 'absolute';
+    appState.labelRenderer.domElement.style.top = '0px';
+    appState.labelRenderer.domElement.style.pointerEvents = 'none'; // allow clicks to pass through
+    displayArea.appendChild(appState.labelRenderer.domElement);
+
     try {
         const environment = new RoomEnvironment();
         const pmremGen = new THREE.PMREMGenerator( appState.renderer );
@@ -127,8 +137,26 @@ export async function initThreeJS() {
     // Disable OrbitControls while dragging the gizmo
     appState.transformControls.addEventListener('dragging-changed', function (event) {
         appState.controls.enabled = !event.value;
-        if (event.value) onDragStart();
-        else onDragEnd();
+        if (event.value) {
+            onDragStart(); // Collision start
+        } else {
+            onDragEnd(); // Collision end
+            
+            // --- RECORD MANUAL TRANSFORM ---
+            // When drag ends, record the new state of the object so it can be replayed.
+            if (appState.currentDisplayObject && !appState.isReplaying) {
+                const obj = appState.currentDisplayObject;
+                recordAction('manual_transform', {
+                    uuid: obj.uuid,
+                    name: obj.name, // Helpful for debugging log
+                    transform: {
+                        position: { x: obj.position.x, y: obj.position.y, z: obj.position.z },
+                        rotation: { x: obj.rotation.x, y: obj.rotation.y, z: obj.rotation.z },
+                        scale: { x: obj.scale.x, y: obj.scale.y, z: obj.scale.z }
+                    }
+                });
+            }
+        }
     });
 
     appState.transformControls.addEventListener('change', function () {
@@ -178,14 +206,8 @@ export function applyTheme(themeKey) {
     if (appState.lights.grid) {
         appState.lights.grid.material.color.setHex(theme.gridColor);
         appState.lights.grid.material.opacity = theme.gridOpacity;
-        // GridHelper uses vertex colors, need to traverse or recreate to change line colors perfectly, 
-        // but setting material color tints it.
-        // For cleaner look, we recreate or just tint. Tint is easier.
         appState.lights.grid.material.needsUpdate = true;
     }
-
-    // Update Gizmo Colors? 
-    // TransformControls are fairly standard, but we can ensure they pop against the bg.
 }
 
 export function setTransformMode(mode) {
@@ -217,7 +239,7 @@ export function onWindowResize() {
      
      // Correct resize for OrthographicCamera
      const aspect = width / height;
-     const frustumHeight = 20; // Maintain consistent vertical scale
+     const frustumHeight = 20; 
      
      appState.camera.left = -frustumHeight * aspect / 2;
      appState.camera.right = frustumHeight * aspect / 2;
@@ -226,12 +248,21 @@ export function onWindowResize() {
      
      appState.camera.updateProjectionMatrix();
      appState.renderer.setSize(width, height);
+     
+     if (appState.labelRenderer) {
+         appState.labelRenderer.setSize(width, height);
+     }
 }
 
 export function animate() {
     requestAnimationFrame(animate);
     if (appState.controls) appState.controls.update();
-    if (appState.renderer && appState.scene && appState.camera) appState.renderer.render(appState.scene, appState.camera);
+    if (appState.renderer && appState.scene && appState.camera) {
+        appState.renderer.render(appState.scene, appState.camera);
+        if (appState.labelRenderer) {
+            appState.labelRenderer.render(appState.scene, appState.camera);
+        }
+    }
 }
 
 export function setCameraView(view) {
@@ -281,13 +312,10 @@ export function getTaggableObjects() {
 
         if (isModel || isWorkFeature) {
              let rawName = child.userData.filename || child.name || 'Object';
-             
-             // Sanitize for @mention (No spaces allowed in simple regex match)
-             // Replace spaces with underscores
              const taggableName = rawName.replace(/\s+/g, '_');
              
              list.push({
-                 name: taggableName, // This is what matches @Name
+                 name: taggableName, 
                  uuid: child.uuid,
                  object: child
              });
@@ -302,8 +330,6 @@ export function fitGeometryView() {
     const box = new THREE.Box3();
     let hasContent = false;
 
-    // Check strict content roots (loaded_glb and fallback_cube)
-    // This ignores helpers like Grid, Gizmos, Lights
     appState.scene.children.forEach(child => {
         if ((child.name === 'loaded_glb' || child.name === 'fallback_cube') && child.visible) {
              child.updateMatrixWorld(true);
@@ -320,36 +346,24 @@ export function fitGeometryView() {
     const center = new THREE.Vector3();
     box.getCenter(center);
     
-    // 1. Move Camera Target to Center
-    // We want to preserve the viewing angle but center the object.
     const direction = new THREE.Vector3().subVectors(appState.camera.position, appState.controls.target).normalize();
-    const distance = 50; // Arbitrary safe distance for Ortho camera
+    const distance = 50; 
     
     appState.controls.target.copy(center);
     appState.camera.position.copy(center).add(direction.multiplyScalar(distance));
     
-    // 2. Adjust Zoom
-    // Use bounding sphere diameter for a safe fit regardless of rotation
     const sphere = new THREE.Sphere();
     box.getBoundingSphere(sphere);
     const diameter = sphere.radius * 2 || 1;
     
-    const frustumHeight = 20; // Fixed vertical units in our setup (see initThreeJS and onWindowResize)
-    // Calculate aspect ratio from current camera frustum planes
+    const frustumHeight = 20; 
     const aspect = (appState.camera.right - appState.camera.left) / (appState.camera.top - appState.camera.bottom);
     
-    const padding = 0.8; // 0.8 means object takes 80% of screen
-    
-    // Determine zoom required to fit the diameter in both height and width
-    // Visible Height = frustumHeight / zoom
-    // Visible Width = (frustumHeight * aspect) / zoom
-    
+    const padding = 0.8; 
     const zoomForHeight = frustumHeight / diameter;
     const zoomForWidth = (frustumHeight * aspect) / diameter;
     
     let newZoom = Math.min(zoomForHeight, zoomForWidth) * padding;
-    
-    // Clamp zoom to reasonable limits (100 allows for very small objects)
     newZoom = Math.min(Math.max(newZoom, 0.1), 100);
     
     appState.camera.zoom = newZoom;

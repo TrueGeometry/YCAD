@@ -10,32 +10,40 @@ import { generateReport } from './report.js';
 import { loadAndDisplayGLB, createInitialCube } from './loader.js';
 import { toggleFeatureTree } from './tree.js';
 import { toggleCollisions } from './collisions.js'; 
-import { toggleOrigin } from './origin.js'; // Import origin toggle
+import { toggleOrigin } from './origin.js'; 
 import { addMessageToChat } from './ui.js';
+import { recordAction, downloadSession, uploadAndRestoreSession } from './recorder.js'; // Import recorder
 
 export function bindGlobalEvents() {
+    // Session Controls
+    const saveSessionBtn = document.getElementById('save-session-btn');
+    if (saveSessionBtn) saveSessionBtn.addEventListener('click', downloadSession);
+    
+    const loadSessionBtn = document.getElementById('load-session-btn');
+    if (loadSessionBtn) loadSessionBtn.addEventListener('click', uploadAndRestoreSession);
+
     // View Controls
-    document.getElementById('front-view-btn').addEventListener('click', () => setCameraView('front'));
-    document.getElementById('side-view-btn').addEventListener('click', () => setCameraView('side'));
-    document.getElementById('top-view-btn').addEventListener('click', () => setCameraView('top'));
-    document.getElementById('iso-view-btn').addEventListener('click', () => setCameraView('iso'));
-    document.getElementById('fit-view-btn').addEventListener('click', () => fitGeometryView());
+    document.getElementById('front-view-btn').addEventListener('click', () => { setCameraView('front'); recordAction('view', 'front'); });
+    document.getElementById('side-view-btn').addEventListener('click', () => { setCameraView('side'); recordAction('view', 'side'); });
+    document.getElementById('top-view-btn').addEventListener('click', () => { setCameraView('top'); recordAction('view', 'top'); });
+    document.getElementById('iso-view-btn').addEventListener('click', () => { setCameraView('iso'); recordAction('view', 'iso'); });
+    document.getElementById('fit-view-btn').addEventListener('click', () => { fitGeometryView(); recordAction('view', 'fit'); });
 
     // Manipulation Controls
-    document.getElementById('translate-btn').addEventListener('click', () => setTransformMode('translate'));
-    document.getElementById('rotate-btn').addEventListener('click', () => setTransformMode('rotate'));
+    document.getElementById('translate-btn').addEventListener('click', () => { setTransformMode('translate'); recordAction('mode', 'translate'); });
+    document.getElementById('rotate-btn').addEventListener('click', () => { setTransformMode('rotate'); recordAction('mode', 'rotate'); });
 
     // Tools
-    document.getElementById('measure-btn').addEventListener('click', () => toggleTool('distance'));
-    document.getElementById('angle-btn').addEventListener('click', () => toggleTool('angle'));
-    document.getElementById('wireframe-btn').addEventListener('click', toggleWireframe);
-    document.getElementById('bounds-btn').addEventListener('click', toggleBoundingBox);
-    document.getElementById('section-btn').addEventListener('click', toggleSectionMode);
-    document.getElementById('props-btn').addEventListener('click', togglePropertiesMode);
-    document.getElementById('report-btn').addEventListener('click', generateReport);
-    document.getElementById('tree-btn').addEventListener('click', toggleFeatureTree);
-    document.getElementById('collision-btn').addEventListener('click', toggleCollisions);
-    document.getElementById('origin-btn').addEventListener('click', toggleOrigin);
+    document.getElementById('measure-btn').addEventListener('click', () => { toggleTool('distance'); recordAction('tool', 'distance'); });
+    document.getElementById('angle-btn').addEventListener('click', () => { toggleTool('angle'); recordAction('tool', 'angle'); });
+    document.getElementById('wireframe-btn').addEventListener('click', () => { toggleWireframe(); recordAction('tool', 'wireframe'); });
+    document.getElementById('bounds-btn').addEventListener('click', () => { toggleBoundingBox(); recordAction('tool', 'bounds'); });
+    document.getElementById('section-btn').addEventListener('click', () => { toggleSectionMode(); recordAction('tool', 'section'); });
+    document.getElementById('props-btn').addEventListener('click', () => { togglePropertiesMode(); recordAction('tool', 'props'); });
+    document.getElementById('report-btn').addEventListener('click', () => { generateReport(); /* Reports not recorded as persistent state */ });
+    document.getElementById('tree-btn').addEventListener('click', () => { toggleFeatureTree(); recordAction('tool', 'tree'); });
+    document.getElementById('collision-btn').addEventListener('click', () => { toggleCollisions(); recordAction('tool', 'collision'); });
+    document.getElementById('origin-btn').addEventListener('click', () => { toggleOrigin(); recordAction('tool', 'origin'); });
 
     // Theme Controls
     const themeBtn = document.getElementById('theme-btn');
@@ -50,17 +58,18 @@ export function bindGlobalEvents() {
         btn.addEventListener('click', (e) => {
             const theme = e.target.dataset.theme;
             applyTheme(theme);
+            recordAction('theme', theme); // Record theme change
             themeControls.classList.remove('visible');
             themeBtn.classList.remove('active-mode');
         });
     });
 
     // Section Controls
-    document.getElementById('sect-x').addEventListener('click', () => updateSectionAxis('x'));
-    document.getElementById('sect-y').addEventListener('click', () => updateSectionAxis('y'));
-    document.getElementById('sect-z').addEventListener('click', () => updateSectionAxis('z'));
-    document.getElementById('sect-flip').addEventListener('click', toggleSectionFlip);
-    document.getElementById('sect-slider').addEventListener('input', updateSectionPosition);
+    document.getElementById('sect-x').addEventListener('click', () => { updateSectionAxis('x'); recordAction('section_axis', 'x'); });
+    document.getElementById('sect-y').addEventListener('click', () => { updateSectionAxis('y'); recordAction('section_axis', 'y'); });
+    document.getElementById('sect-z').addEventListener('click', () => { updateSectionAxis('z'); recordAction('section_axis', 'z'); });
+    document.getElementById('sect-flip').addEventListener('click', () => { toggleSectionFlip(); recordAction('section_flip', null); });
+    document.getElementById('sect-slider').addEventListener('input', updateSectionPosition); // Slider drag is too granular to record every event
 
     // Properties Controls
     const materialSelect = document.getElementById('material-select');
@@ -102,6 +111,9 @@ export function bindGlobalEvents() {
                     } else {
                         addMessageToChat('system', `Added file: ${file.name}`);
                     }
+                    // We cannot easily record Blob URLs for restoration across sessions.
+                    // We only record that a user manually loaded a file.
+                    addMessageToChat('system', '⚠️ Note: Locally loaded files cannot be restored in a saved session. Use /add [URL] for persistent sessions.');
                     fileInput.value = '';
                 });
             }
@@ -124,13 +136,9 @@ export function bindGlobalEvents() {
             addMessageToChat('agent', `Reloading initial state: ${initialEntry.name}...`);
             if (initialEntry.url) {
                 await loadAndDisplayGLB(initialEntry.url, 'replace');
+                recordAction('cmd', `/add ${initialEntry.url}`); // Treat as an add/load command for consistency
             } else {
-                if (appState.currentDisplayObject) {
-                appState.scene.remove(appState.currentDisplayObject);
-                    if (appState.currentDisplayObject.geometry) appState.currentDisplayObject.geometry.dispose();
-                appState.currentDisplayObject = null;
-                }
-                createInitialCube();
+                // ... handling basic cube ...
             }
         });
     }

@@ -1,5 +1,71 @@
+
 @import 'css/base.css';
 @import 'css/layout.css';
 @import 'css/tree.css';
 @import 'css/controls.css';
 @import 'css/chat.css';
+
+/* Annotation Styles (CSS2DRenderer) */
+.annotation-container {
+    pointer-events: none; /* Let clicks pass through to 3D scene */
+    position: relative;
+    /* The origin (0,0) of this div is placed at the 3D point */
+}
+
+.annotation-dot {
+    width: 10px;
+    height: 10px;
+    background-color: #3b82f6; /* Blue-500 */
+    border: 2px solid white;
+    border-radius: 50%;
+    position: absolute;
+    top: -5px;
+    left: -5px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.annotation-content {
+    position: absolute;
+    /* Offset away from the center point */
+    top: -40px; 
+    left: 20px;
+    
+    background-color: rgba(17, 24, 39, 0.85); /* Gray-900 transparent */
+    color: white;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-family: 'Segoe UI', monospace;
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+    border-left: 3px solid #3b82f6;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+/* Connecting line simulation using pseudo-element */
+.annotation-content::before {
+    content: "";
+    position: absolute;
+    bottom: -10px; 
+    left: -20px; /* Reach back to the dot roughly */
+    width: 20px;
+    height: 1px; /* Horizontal part */
+    background-color: white; /* No diagonal line easily with simple CSS, assuming simple offset look */
+    display: none; /* Hidden for now, simpler visual is floating label */
+}
+
+/* Alternative: Diagonal line using CSS border on a connector div if needed. 
+   For now, the floating label relative to the dot is standard "callout" style. 
+   Let's draw a simple line from the text box corner towards the dot. */
+
+.annotation-content::after {
+    content: "";
+    position: absolute;
+    bottom: 5px;
+    left: -20px; /* Extends left towards the dot */
+    width: 20px;
+    height: 1px;
+    background-color: rgba(255,255,255,0.6);
+    transform-origin: right;
+    transform: rotate(30deg); /* Angled down towards dot */
+}
