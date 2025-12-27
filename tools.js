@@ -141,10 +141,6 @@ export function onCanvasClick(event) {
         });
 
         if (hit) {
-            // Find the root object (the group that was loaded) OR allow sub-selection?
-            // Existing logic selects root. Let's stick to root for main Transform, but update tree?
-            // Actually, if we want detailed tree selection, we might want to select specific meshes.
-            // For now, keep existing behavior (select Root loaded object) to avoid breaking app state structure.
             let rootObj = hit.object;
             while(rootObj.parent && rootObj.parent.type !== 'Scene' && rootObj.name !== 'loaded_glb') {
                 rootObj = rootObj.parent;
@@ -163,6 +159,12 @@ export function onCanvasClick(event) {
             highlightInTree({ uuid: null });
         }
     }
+}
+
+// Allow programmatic input for automated testing
+export function addMeasurementPoint(point) {
+    if (currentTool === 'distance') handleDistanceClick(point);
+    else if (currentTool === 'angle') handleAngleClick(point);
 }
 
 function createMarker(point, color = 0xff0000) {

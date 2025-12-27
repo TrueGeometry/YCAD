@@ -1,9 +1,10 @@
 // commands/analytics_cmds.js
+import * as THREE from 'three';
 import { resolveTarget } from './utils.js';
 import { addMessageToChat } from '../ui.js';
 import { showPhysicalProperties, computePhysicalProperties } from '../properties.js';
 import { toggleSectionMode, updateSectionAxis, resetSection, isSectionMode } from '../section.js';
-import { toggleTool, deactivateTools, toggleWireframe, toggleBoundingBox } from '../tools.js';
+import { toggleTool, deactivateTools, toggleWireframe, toggleBoundingBox, addMeasurementPoint } from '../tools.js';
 
 export const analyticsCommands = {
     '/props': {
@@ -44,18 +45,40 @@ export const analyticsCommands = {
     },
 
     '/measure': {
-        desc: 'Measure (dist, angle, off)',
+        desc: 'Measure (dist [pts], angle [pts], off)',
         execute: (argRaw) => {
-            const arg = argRaw.toLowerCase();
-            if (arg === 'off') {
+            const args = argRaw.trim().split(/\s+/);
+            const subCmd = args[0].toLowerCase();
+            
+            if (subCmd === 'off') {
                 deactivateTools();
                 addMessageToChat('system', 'Measurement tools disabled.');
-            } else if (arg === 'distance' || arg === 'dist') {
+            } else if (subCmd === 'distance' || subCmd === 'dist') {
                 toggleTool('distance');
-            } else if (arg === 'angle') {
+                // Support automatic coordinate entry: /measure dist x1 y1 z1 x2 y2 z2
+                if (args.length >= 7) {
+                    const p1 = new THREE.Vector3(parseFloat(args[1]), parseFloat(args[2]), parseFloat(args[3]));
+                    const p2 = new THREE.Vector3(parseFloat(args[4]), parseFloat(args[5]), parseFloat(args[6]));
+                    if (!isNaN(p1.x) && !isNaN(p2.x)) {
+                         addMeasurementPoint(p1);
+                         addMeasurementPoint(p2);
+                    }
+                }
+            } else if (subCmd === 'angle') {
                 toggleTool('angle');
+                // Support automatic coordinate entry: /measure angle vx vy vz p1x p1y p1z p2x p2y p2z
+                if (args.length >= 10) {
+                     const v = new THREE.Vector3(parseFloat(args[1]), parseFloat(args[2]), parseFloat(args[3]));
+                     const p1 = new THREE.Vector3(parseFloat(args[4]), parseFloat(args[5]), parseFloat(args[6]));
+                     const p2 = new THREE.Vector3(parseFloat(args[7]), parseFloat(args[8]), parseFloat(args[9]));
+                     if (!isNaN(v.x) && !isNaN(p1.x) && !isNaN(p2.x)) {
+                         addMeasurementPoint(v);
+                         addMeasurementPoint(p1);
+                         addMeasurementPoint(p2);
+                     }
+                }
             } else {
-                addMessageToChat('system', 'Usage: /measure [distance|angle|off]');
+                addMessageToChat('system', 'Usage: /measure [distance|angle|off] (optional coords)');
             }
         }
     },

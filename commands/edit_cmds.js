@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { appState } from '../state.js';
 import { addMessageToChat } from '../ui.js';
 import { resolveTarget } from './utils.js';
-import { deleteObject, highlightInTree } from '../tree.js';
+import { deleteObject, highlightInTree, updateFeatureTree } from '../tree.js';
 import { attachTransformControls, setTransformMode, getTaggableObjects } from '../viewer.js';
 
 export const editCommands = {
@@ -170,6 +170,49 @@ export const editCommands = {
             }
 
             addMessageToChat('system', `Docked <b>${sourceName}</b> adjacent to <b>${targetName}</b>.`);
+        }
+    },
+
+    '/setprop': {
+        desc: 'Set property (@Obj key val)',
+        execute: (argRaw) => {
+            const { object, name } = resolveTarget(argRaw);
+            if (!object) { addMessageToChat('system', '⚠️ No object selected.'); return; }
+            
+            const clean = argRaw.replace(/@[\w\d_-]+/g, '').trim();
+            const args = clean.split(/\s+/);
+            
+            if (args.length < 2) { addMessageToChat('system', 'Usage: /setprop key value'); return; }
+            
+            const key = args[0];
+            const val = args.slice(1).join(' ');
+            
+            if(!object.userData) object.userData = {};
+            object.userData[key] = val;
+            
+            addMessageToChat('system', `Set ${name}.${key} = ${val}`);
+            updateFeatureTree();
+        }
+    },
+
+    '/delprop': {
+        desc: 'Delete property (@Obj key)',
+        execute: (argRaw) => {
+            const { object, name } = resolveTarget(argRaw);
+            if (!object) { addMessageToChat('system', '⚠️ No object selected.'); return; }
+            
+            const clean = argRaw.replace(/@[\w\d_-]+/g, '').trim();
+            const key = clean.split(/\s+/)[0];
+            
+            if (!key) return;
+            
+            if(object.userData && object.userData[key]) {
+                delete object.userData[key];
+                addMessageToChat('system', `Removed ${name}.${key}`);
+                updateFeatureTree();
+            } else {
+                addMessageToChat('system', `Property ${key} not found.`);
+            }
         }
     }
 };

@@ -1,5 +1,6 @@
 // commands/view_cmds.js
 import { setCameraView, fitGeometryView } from '../viewer.js';
+import { toggleFeatureTree } from '../tree.js';
 import { addMessageToChat } from '../ui.js';
 
 export const viewCommands = {
@@ -17,6 +18,12 @@ export const viewCommands = {
             } else {
                 addMessageToChat('system', 'Usage: /view [front|side|top|iso|fit]');
             }
+        }
+    },
+    '/tree': {
+        desc: 'Toggle Feature Tree',
+        execute: () => {
+            toggleFeatureTree();
         }
     }
 };

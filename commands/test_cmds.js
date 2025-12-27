@@ -103,7 +103,28 @@ export function getTestCommands(executor) {
                     { cmd: '/section y', delay: 2000, narration: txt.section_on },
                     { cmd: '/section off', delay: 1000, narration: txt.section_off },
                     { cmd: '/props', delay: 2500, narration: txt.props },
+
+                    // Test Measurement Tools (Automated Selection)
+                    // Measures distance between (0,0,0) and (5,0,0)
+                    { cmd: '/measure dist 0 0 0 5 0 0', delay: 3000, narration: txt.measure_dist },
+                    // Measures 90 deg angle: Vertex(0,0,0) -> P1(5,0,0) -> P2(0,5,0)
+                    { cmd: '/measure angle 0 0 0 5 0 0 0 5 0', delay: 3000, narration: txt.measure_angle },
+                    { cmd: '/measure off', delay: 1000, narration: txt.measure_off },
+
+                    // Test Collision Detection
+                    // Move object to position 17,5,0 (Original was at 5,5,0. Rect pattern dx=12 creates a copy at 17,5,0. Overlap!)
+                    { cmd: '/collision', delay: 1500, narration: txt.col_enable },
+                    { cmd: '/move 17 5 0', delay: 3000, narration: txt.col_trigger }, 
+                    { cmd: '/move 5 5 0', delay: 2000, narration: txt.col_clear },
+                    { cmd: '/collision', delay: 1000, narration: txt.col_disable },
                     
+                    // Test Feature Tree, Properties, and Deletion
+                    { cmd: '/tree', delay: 1500, narration: txt.tree_show },
+                    { cmd: '/setprop MaterialRef 8844-B', delay: 2000, narration: txt.prop_add },
+                    { cmd: '/delprop MaterialRef', delay: 2000, narration: txt.prop_del },
+                    { cmd: '/delete', delay: 2000, narration: txt.obj_del },
+                    { cmd: '/tree', delay: 1000, narration: txt.tree_hide },
+
                     // Final View adjustment
                     { cmd: '/view iso', delay: 1500, narration: txt.final_iso },
                     { cmd: '/view fit', delay: 1000, narration: txt.complete }
