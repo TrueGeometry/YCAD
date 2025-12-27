@@ -7,6 +7,7 @@ import { addMessageToChat } from './ui.js';
 import { getTaggableObjects } from './viewer.js';
 import { captureComponentSnapshot, captureGroupSnapshot } from './capture.js';
 import { getCommandList, executeCommand } from './commands.js';
+import { KBE_ASSETS } from './kbe_data.js';
 
 // DOM Elements
 const chatInput = document.getElementById('message-input');
@@ -181,9 +182,12 @@ function applyCommand(cmdStr) {
 
 function showMentionSuggestions(query) {
     const objects = getTaggableObjects();
-    const filtered = objects.filter(o => o.name.toLowerCase().includes(query));
+    const filteredScene = objects.filter(o => o.name.toLowerCase().includes(query));
+    
+    // Filter KBE catalog assets
+    const filteredKBE = KBE_ASSETS.filter(a => a.name.toLowerCase().includes(query));
 
-    if (filtered.length === 0) {
+    if (filteredScene.length === 0 && filteredKBE.length === 0) {
         hideMentionSuggestions();
         return;
     }
@@ -191,13 +195,29 @@ function showMentionSuggestions(query) {
     mentionBox.innerHTML = '';
     mentionBox.style.display = 'block';
 
-    filtered.forEach(obj => {
+    // 1. Scene Objects
+    filteredScene.forEach(obj => {
         const div = document.createElement('div');
         div.className = 'mention-item';
         div.innerHTML = `<i data-lucide="box"></i> ${obj.name}`;
         
         div.addEventListener('click', () => {
              applyMention(obj);
+        });
+        
+        mentionBox.appendChild(div);
+    });
+
+    // 2. Catalog Assets (KBE)
+    filteredKBE.forEach(asset => {
+        const div = document.createElement('div');
+        div.className = 'mention-item';
+        // Distinct styling for catalog items
+        div.innerHTML = `<i data-lucide="book-open" style="color:#f59e0b;"></i> ${asset.name} <span style="font-size:0.7em; color:#999; margin-left:auto">Catalog</span>`;
+        
+        div.addEventListener('click', () => {
+             // Pass a special object to applyMention indicating it is a catalog item
+             applyMention({ name: asset.name, isCatalog: true });
         });
         
         mentionBox.appendChild(div);
@@ -224,13 +244,15 @@ function applyMention(obj) {
     chatInput.focus();
     hideMentionSuggestions();
 
-    // Trigger Snapshot logic
-    const snapshot = captureComponentSnapshot(obj.object);
-    if (snapshot) {
-        appState.attachedImages.push(snapshot);
-        renderAttachments();
-    } else {
-        console.warn("Failed to capture snapshot for", obj.name);
+    // Trigger Snapshot logic ONLY if it is a scene object (has .object property and not isCatalog)
+    if (!obj.isCatalog && obj.object) {
+        const snapshot = captureComponentSnapshot(obj.object);
+        if (snapshot) {
+            appState.attachedImages.push(snapshot);
+            renderAttachments();
+        } else {
+            console.warn("Failed to capture snapshot for", obj.name);
+        }
     }
 }
 
