@@ -5,6 +5,7 @@ import { addMessageToChat } from '../ui.js';
 import { showPhysicalProperties, computePhysicalProperties } from '../properties.js';
 import { toggleSectionMode, updateSectionAxis, resetSection, isSectionMode } from '../section.js';
 import { toggleTool, deactivateTools, toggleWireframe, toggleBoundingBox, addMeasurementPoint } from '../tools.js';
+import { toggleCollisions } from '../collisions.js';
 
 export const analyticsCommands = {
     '/props': {
@@ -95,6 +96,13 @@ export const analyticsCommands = {
         desc: 'Toggle bounding box',
         execute: () => {
             toggleBoundingBox();
+        }
+    },
+
+    '/collision': {
+        desc: 'Toggle collision detection',
+        execute: () => {
+            toggleCollisions();
         }
     }
 };
