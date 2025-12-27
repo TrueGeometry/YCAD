@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- SEO and Metadata -->
+    <title>Design Assistant by TrueGeometry</title>
+    <meta name="description" content="Chat with an intelligent AI agent to design 3D models.">
+    
+    <!-- External Libraries -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Main Container -->
+    <div class="main-container">
+
+        <!-- Left Panel: 3D Design Area -->
+        <section class="design-panel">
+            <!-- Feature Tree Overlay -->
+            <div id="feature-tree" class="feature-tree-panel">
+                <div class="tree-header">Feature Tree</div>
+                <div id="tree-content"></div>
+            </div>
+
+            <div id="design-display-area">
+                <canvas id="design-canvas"></canvas>
+                <div id="measure-label">Distance: 0.00</div>
+                <!-- Collision Warning Overlay -->
+                <div id="collision-warning">⚠️ Collision Detected!</div>
+            </div>
+            
+            <!-- Pop-up: Section Controls -->
+            <div id="section-controls" class="popup-control-panel">
+                <div class="section-row">
+                    <span style="font-size:12px; font-weight:bold;">Axis:</span>
+                    <button id="sect-x">X</button>
+                    <button id="sect-y">Y</button>
+                    <button id="sect-z">Z</button>
+                    <button id="sect-flip">Flip</button>
+                </div>
+                <div class="section-row" style="display:block;">
+                     <input type="range" id="sect-slider" min="-10" max="10" step="0.1" value="0">
+                </div>
+            </div>
+
+            <!-- Pop-up: Properties Controls -->
+            <div id="properties-controls" class="popup-control-panel">
+                 <div class="props-row">
+                    <label for="material-select">Material:</label>
+                    <select id="material-select">
+                        <option value="7.85">Steel (7.85 g/cm³)</option>
+                        <option value="2.70">Aluminum (2.70 g/cm³)</option>
+                        <option value="4.50">Titanium (4.50 g/cm³)</option>
+                        <option value="8.96">Copper (8.96 g/cm³)</option>
+                        <option value="1.04">ABS Plastic (1.04 g/cm³)</option>
+                        <option value="1.25">PLA Plastic (1.25 g/cm³)</option>
+                        <option value="1.00">Water (1.00 g/cm³)</option>
+                        <option value="custom">Custom...</option>
+                    </select>
+                 </div>
+                 <div class="props-row">
+                     <label for="density-input">Density (g/cm³):</label>
+                     <input type="number" id="density-input" value="7.85" step="0.01">
+                 </div>
+                 <div class="props-row">
+                     <button id="calc-props-btn">Calculate Properties</button>
+                 </div>
+            </div>
+
+            <!-- Pop-up: Theme Controls -->
+            <div id="theme-controls" class="popup-control-panel">
+                <div class="props-row">
+                    <label style="margin-bottom:8px; display:block;">Select Theme:</label>
+                    <div class="flex flex-col gap-2">
+                        <button class="theme-select-btn" data-theme="studio">Studio (Light)</button>
+                        <button class="theme-select-btn" data-theme="dark">Dark Mode</button>
+                        <button class="theme-select-btn" data-theme="midnight">Midnight Blue</button>
+                        <button class="theme-select-btn" data-theme="sunset">Sunset</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Controls Bar -->
+            <div id="controls-area">
+                <!-- View Group -->
+                <div class="control-group">
+                    <button id="front-view-btn" title="Front View" class="icon-only"><i data-lucide="monitor"></i></button>
+                    <button id="top-view-btn" title="Top View" class="icon-only"><i data-lucide="layers"></i></button>
+                    <button id="side-view-btn" title="Side View" class="icon-only"><i data-lucide="rectangle-vertical"></i></button>
+                    <button id="iso-view-btn" title="Iso View" class="icon-only"><i data-lucide="box"></i></button>
+                    <button id="fit-view-btn" title="Fit to Screen" class="icon-only"><i data-lucide="maximize"></i></button>
+                </div>
+
+                <!-- Manipulation Group -->
+                <div class="control-group">
+                    <button id="translate-btn" title="Move Object" class="icon-only"><i data-lucide="move"></i></button>
+                    <button id="rotate-btn" title="Rotate Object" class="icon-only"><i data-lucide="rotate-3d"></i></button>
+                </div>
+
+                <!-- Analysis Group -->
+                <div class="control-group">
+                    <button id="tree-btn" class="analysis-tool icon-only" title="Feature Tree"><i data-lucide="list-tree"></i></button>
+                    <button id="origin-btn" class="analysis-tool icon-only active-mode" title="Toggle Origin"><i data-lucide="crosshair"></i></button>
+                    <button id="measure-btn" class="analysis-tool icon-only" title="Measure Distance"><i data-lucide="ruler"></i></button>
+                    <button id="angle-btn" class="analysis-tool icon-only" title="Measure Angle"><i data-lucide="compass"></i></button>
+                    <button id="section-btn" class="analysis-tool icon-only" title="Cross Section"><i data-lucide="scissors"></i></button>
+                    <button id="wireframe-btn" class="analysis-tool icon-only" title="Toggle Wireframe"><i data-lucide="triangle"></i></button>
+                    <button id="bounds-btn" class="analysis-tool icon-only" title="Bounding Box"><i data-lucide="maximize-2"></i></button>
+                    <button id="collision-btn" class="analysis-tool icon-only" title="Collision Warning"><i data-lucide="zap"></i></button>
+                    <button id="props-btn" class="analysis-tool icon-only" title="Properties"><i data-lucide="calculator"></i></button>
+                    <button id="theme-btn" class="analysis-tool icon-only" title="Visual Theme"><i data-lucide="palette"></i></button>
+                    <button id="report-btn" class="analysis-tool icon-only" title="Generate Report"><i data-lucide="file-text"></i></button>
+                </div>
+
+                <!-- Action Group -->
+                <div class="control-group">
+                    <button id="load-file-btn" class="primary-action" title="Replace current scene"><i data-lucide="folder-open"></i> Open</button>
+                    <button id="add-file-btn" title="Add to current scene" style="color:#2563eb;"><i data-lucide="plus-circle"></i> Add</button>
+                </div>
+                
+                <input type="file" id="file-upload-input" accept=".glb,.gltf" style="display:none;">
+            </div>
+
+            <!-- Design History Footer -->
+            <footer id="design-history">
+                 <span id="initial-state-btn">Initial State</span>
+                 <!-- Dynamic history items -->
+            </footer>
+        </section>
+
+        <!-- Right Panel: Chat Interface -->
+        <aside class="chat-panel">
+            <!-- Header -->
+            <div id="chat-header" class="flex flex-col items-center pt-6 pb-2 px-4 bg-white z-10 border-b border-gray-100 shadow-[0_2px_4px_rgba(0,0,0,0.02)]">
+                <!-- Placeholder Logo -->
+                <div class="w-16 h-16 mb-2 rounded-xl bg-blue-100 flex items-center justify-center shadow-sm">
+                   <i data-lucide="box" class="w-8 h-8 text-blue-600"></i>
+                </div>
+                <h1 class="text-xl font-bold text-gray-800 tracking-tight">Design Assistant</h1>
+                <h2 class="text-xs text-gray-500 font-semibold uppercase tracking-wide mb-3">Knowledge Based Engineering</h2>
+                
+                <!-- Trending Section -->
+                <div id="trending-wrapper" class="w-full hidden mt-2 pt-3 border-t border-dashed border-gray-200">
+                    <div class="flex items-center justify-center gap-1.5 mb-2.5">
+                        <i data-lucide="trending-up" class="w-3 h-3 text-blue-500"></i>
+                        <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Trending Now</span>
+                    </div>
+                    <div id="trending-list" class="flex flex-wrap justify-center gap-2">
+                        <!-- Items injected via JS -->
+                    </div>
+                </div>
+            </div>
+             
+            <!-- Chat Box -->
+            <div id="chat-box"></div>
+            
+            <!-- Loading State -->
+            <div id="loading-indicator">Agent is thinking...</div>
+
+            <!-- Attachment Preview -->
+            <div id="attachment-preview" class="hidden">
+                <img id="attachment-img" src="" alt="Screenshot">
+                <button id="clear-attachment-btn"><i data-lucide="x"></i></button>
+            </div>
+            
+            <!-- Input Area -->
+            <div id="input-area">
+                <button id="screenshot-btn" title="Attach 3D Screenshot"><i data-lucide="camera"></i></button>
+                <input type="text" id="message-input" placeholder="Describe the design ..." autocomplete="off">
+                <button id="send-button" disabled>Send</button>
+            </div>
+        </aside>
+    </div>
+
+    <!-- Three.js Import Map -->
+    <script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/",
+    "three/": "https://esm.sh/three@^0.182.0/",
+    "three-mesh-bvh": "https://unpkg.com/three-mesh-bvh@0.7.3/build/index.module.js"
+  }
+}
+</script>
+
+    <!-- Main Application Logic -->
+    <script type="module" src="main.js"></script>
+</body>
+</html>

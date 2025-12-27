@@ -1,0 +1,230 @@
+// tools.js
+// Measurement, Wireframe, and Bounding Box tools.
+
+import * as THREE from 'three';
+import { appState } from './state.js';
+import { addMessageToChat } from './ui.js';
+import { attachTransformControls } from './viewer.js';
+import { highlightInTree } from './tree.js'; // Import selection sync
+
+const measureLabel = document.getElementById('measure-label');
+const designCanvas = document.getElementById('design-canvas');
+
+let currentTool = null;
+let isWireframe = false;
+let boundsHelper = null;
+let measurementPoints = [];
+let measurementMarkers = [];
+let measurementLines = [];
+
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+
+export function toggleTool(toolName) {
+    if (currentTool === toolName) {
+        deactivateTools();
+        return;
+    }
+    deactivateTools();
+    currentTool = toolName;
+    
+    // Disable Transform gizmo when measuring
+    attachTransformControls(null);
+    
+    if (toolName === 'distance') {
+        document.getElementById('measure-btn').classList.add('active-mode');
+        measureLabel.textContent = "Click start point...";
+        addMessageToChat('system', 'Distance Mode: Click two points on the model.');
+    } else if (toolName === 'angle') {
+        document.getElementById('angle-btn').classList.add('active-mode');
+        measureLabel.textContent = "Click center point (vertex)...";
+        addMessageToChat('system', 'Angle Mode: Click 3 points (Vertex, then two endpoints).');
+    }
+    
+    designCanvas.style.cursor = 'crosshair';
+    measureLabel.classList.add('visible');
+}
+
+export function deactivateTools() {
+    currentTool = null;
+    document.getElementById('measure-btn').classList.remove('active-mode');
+    document.getElementById('angle-btn').classList.remove('active-mode');
+    designCanvas.style.cursor = 'default';
+    measureLabel.classList.remove('visible');
+    
+    measurementMarkers.forEach(marker => appState.scene.remove(marker));
+    measurementMarkers = [];
+    measurementLines.forEach(line => {
+         appState.scene.remove(line);
+         if (line.geometry) line.geometry.dispose();
+    });
+    measurementLines = [];
+    measurementPoints = [];
+    
+    // Re-attach gizmo to current object if it exists
+    if (appState.currentDisplayObject) {
+        attachTransformControls(appState.currentDisplayObject);
+    }
+}
+
+export function toggleWireframe() {
+    if (!appState.scene) return;
+    isWireframe = !isWireframe;
+    appState.scene.traverse((child) => {
+        if (child.isMesh) child.material.wireframe = isWireframe;
+    });
+    document.getElementById('wireframe-btn').classList.toggle('active-mode', isWireframe);
+}
+
+export function resetWireframe() {
+    isWireframe = false;
+    document.getElementById('wireframe-btn').classList.remove('active-mode');
+}
+
+export function toggleBoundingBox() {
+    if (!appState.currentDisplayObject) return;
+    if (boundsHelper) {
+        appState.scene.remove(boundsHelper);
+        boundsHelper = null;
+        document.getElementById('bounds-btn').classList.remove('active-mode');
+        addMessageToChat('system', 'Bounding Box hidden.');
+        return;
+    }
+    const box = new THREE.Box3().setFromObject(appState.currentDisplayObject);
+    boundsHelper = new THREE.Box3Helper(box, 0xffff00);
+    appState.scene.add(boundsHelper);
+    document.getElementById('bounds-btn').classList.add('active-mode');
+    
+    const size = new THREE.Vector3();
+    box.getSize(size);
+    addMessageToChat('system', `Bounds: ${size.x.toFixed(2)} x ${size.y.toFixed(2)} x ${size.z.toFixed(2)}`);
+}
+
+export function resetBounds() {
+     if (boundsHelper) {
+        appState.scene.remove(boundsHelper);
+        boundsHelper = null;
+        document.getElementById('bounds-btn').classList.remove('active-mode');
+    }
+}
+
+export function onCanvasClick(event) {
+    if (!appState.camera || !appState.scene) return;
+    const rect = designCanvas.getBoundingClientRect();
+    mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+    mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+    raycaster.setFromCamera(mouse, appState.camera);
+    
+    // If a tool is active, perform tool logic
+    if (currentTool) {
+        const intersects = raycaster.intersectObjects(appState.scene.children, true);
+        if (intersects.length > 0) {
+            const hit = intersects.find(i => i.object.type === 'Mesh' && i.object.visible);
+            if (hit) {
+                if (currentTool === 'distance') handleDistanceClick(hit.point);
+                if (currentTool === 'angle') handleAngleClick(hit.point);
+            }
+        }
+    } else {
+        // If NO tool is active, perform Selection logic
+        const intersects = raycaster.intersectObjects(appState.scene.children, true);
+        // Filter out helpers (Grid, TransformControls, etc.)
+        const hit = intersects.find(i => {
+            // Traverse up to see if it's part of a loaded model
+            let obj = i.object;
+            while(obj) {
+                if (obj.name === 'loaded_glb' || obj.name === 'fallback_cube') return true;
+                if (obj.type === 'TransformControlsPlane') return false; // Don't select the gizmo itself
+                obj = obj.parent;
+            }
+            return false;
+        });
+
+        if (hit) {
+            // Find the root object (the group that was loaded) OR allow sub-selection?
+            // Existing logic selects root. Let's stick to root for main Transform, but update tree?
+            // Actually, if we want detailed tree selection, we might want to select specific meshes.
+            // For now, keep existing behavior (select Root loaded object) to avoid breaking app state structure.
+            let rootObj = hit.object;
+            while(rootObj.parent && rootObj.parent.type !== 'Scene' && rootObj.name !== 'loaded_glb') {
+                rootObj = rootObj.parent;
+            }
+            
+            attachTransformControls(rootObj);
+            appState.currentDisplayObject = rootObj; 
+            
+            // Sync Tree
+            highlightInTree(rootObj);
+            
+        } else {
+            // Clicked empty space
+            attachTransformControls(null);
+            // Optional: clear tree selection
+            highlightInTree({ uuid: null });
+        }
+    }
+}
+
+function createMarker(point, color = 0xff0000) {
+    const marker = new THREE.Mesh(new THREE.SphereGeometry(0.15, 16, 16), new THREE.MeshBasicMaterial({ color: color }));
+    marker.position.copy(point);
+    appState.scene.add(marker);
+    measurementMarkers.push(marker);
+}
+
+function createLine(p1, p2, color = 0xff0000) {
+    const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints([p1, p2]), new THREE.LineBasicMaterial({ color: color, linewidth: 2 }));
+    appState.scene.add(line);
+    measurementLines.push(line);
+}
+
+function handleDistanceClick(point) {
+    if (measurementPoints.length === 2) deactivateTools();
+    if (measurementPoints.length === 2) { 
+        measurementPoints = []; 
+        measurementMarkers.forEach(m=>appState.scene.remove(m)); 
+        measurementMarkers=[]; 
+        measurementLines.forEach(l=>appState.scene.remove(l)); 
+        measurementLines=[];
+    }
+
+    measurementPoints.push(point);
+    createMarker(point);
+
+    if (measurementPoints.length === 1) {
+        measureLabel.textContent = "Click end point...";
+    } else if (measurementPoints.length === 2) {
+        const p1 = measurementPoints[0];
+        const p2 = measurementPoints[1];
+        createLine(p1, p2);
+        const dist = p1.distanceTo(p2).toFixed(3);
+        measureLabel.textContent = `Distance: ${dist}`;
+        addMessageToChat('system', `Measured Distance: ${dist}`);
+    }
+}
+
+function handleAngleClick(point) {
+    if (measurementPoints.length === 3) { 
+        measurementPoints = []; 
+        measurementMarkers.forEach(m=>appState.scene.remove(m)); 
+        measurementMarkers=[]; 
+        measurementLines.forEach(l=>appState.scene.remove(l)); 
+        measurementLines=[]; 
+    }
+    measurementPoints.push(point);
+    createMarker(point, measurementPoints.length === 1 ? 0xffff00 : 0xff0000);
+
+    if (measurementPoints.length === 1) measureLabel.textContent = "Click first arm point...";
+    else if (measurementPoints.length === 2) {
+        measureLabel.textContent = "Click second arm point...";
+        createLine(measurementPoints[0], measurementPoints[1]);
+    } else if (measurementPoints.length === 3) {
+        const [v, p1, p2] = measurementPoints;
+        createLine(v, p2);
+        const v1 = new THREE.Vector3().subVectors(p1, v).normalize();
+        const v2 = new THREE.Vector3().subVectors(p2, v).normalize();
+        const angle = THREE.MathUtils.radToDeg(v1.angleTo(v2)).toFixed(2);
+        measureLabel.textContent = `Angle: ${angle}°`;
+        addMessageToChat('system', `Measured Angle: ${angle}°`);
+    }
+}

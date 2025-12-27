@@ -1,0 +1,73 @@
+/* Left Panel (Design Area) */
+.design-panel {
+    flex: 3;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    border-right: 1px solid #e0e4e7;
+    overflow: hidden;
+    background-color: #f8f9fa;
+}
+
+#design-display-area {
+    flex-grow: 1;
+    position: relative;
+    width: 100%;
+    display: block;
+    overflow: hidden;
+}
+
+#design-canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+/* Design History Bar */
+#design-history {
+    height: 50px;
+    background-color: #ffffff;
+    border-top: 1px solid #f3f4f6;
+    padding: 0 15px;
+    display: flex;
+    align-items: center;
+    overflow-x: auto;
+    font-size: 0.85em;
+    color: #4b5563;
+    flex-shrink: 0;
+}
+
+#design-history span {
+    margin-right: 12px;
+    padding: 6px 12px;
+    background-color: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 20px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+    font-weight: 500;
+}
+
+#design-history span:hover {
+    background-color: #e5e7eb;
+    border-color: #d1d5db;
+}
+
+/* Responsive: Layout */
+@media (max-width: 768px) {
+    .main-container {
+        flex-direction: column;
+    }
+    .design-panel {
+        flex: none; /* Disable flex growing/shrinking */
+        height: 55%; /* Fixed height ratio for 3D view */
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid #e0e4e7;
+    }
+    #design-history {
+        height: 40px; /* Slightly compact history bar */
+        padding: 0 10px;
+    }
+}
