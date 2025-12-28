@@ -9,6 +9,7 @@ import { WHEEL_DEMO } from './wheel.js';
 import { BRIDGE_DEMO } from './bridge.js';
 import { CAR_DEMO } from './car.js';
 import { SHIP_DEMO } from './ship.js';
+import { SKETCH_PROFILES_DEMO } from './sketch_profiles.js';
 
 export const DEMO_REGISTRY = {
     'table': TABLE_DEMO,
@@ -24,5 +25,7 @@ export const DEMO_REGISTRY = {
     'car': CAR_DEMO,
     'vehicle': CAR_DEMO,      // alias
     'ship': SHIP_DEMO,
-    'boat': SHIP_DEMO         // alias
+    'boat': SHIP_DEMO,        // alias
+    'sketch': SKETCH_PROFILES_DEMO,
+    'profiles': SKETCH_PROFILES_DEMO // alias
 };
