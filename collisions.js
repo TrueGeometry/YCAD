@@ -99,6 +99,15 @@ export function onDragStart() {
         if (node.type === 'GridHelper' || node.name === 'GridHelper') return;
         if (node.type === 'Box3Helper' || node.type === 'PlaneHelper' || node.type === 'Line') return;
 
+        // Exclude Work Geometry / Origin (Planes, Axes, Points)
+        if (node.userData && (node.userData.type === 'WorkPlane' || node.userData.type === 'WorkAxis' || node.userData.type === 'WorkPoint')) return;
+        
+        // Exclude specific system groups by parent name if userData isn't sufficient
+        if (node.parent && (node.parent.name === 'Origin' || node.parent.name === 'Work Features')) return;
+        
+        // Also exclude the default origin center point mesh if it's just a Mesh
+        if (node.name === 'Center Point') return;
+
         // It is a static mesh
         staticMeshes.push(node);
     });

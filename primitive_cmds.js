@@ -91,17 +91,6 @@ export const SHAPE_CONFIG = {
              const points3 = points.map(v => new THREE.Vector3(v.x, v.y, 0));
              return new THREE.BufferGeometry().setFromPoints(points3);
         }
-    },
-    sketch_line: {
-        keys: ['x1', 'y1', 'x2', 'y2'],
-        defaults: [-2, 0, 2, 0],
-        factory: (p) => {
-             const points = [
-                 new THREE.Vector3(p.x1, p.y1, 0),
-                 new THREE.Vector3(p.x2, p.y2, 0)
-             ];
-             return new THREE.BufferGeometry().setFromPoints(points);
-        }
     }
 };
 

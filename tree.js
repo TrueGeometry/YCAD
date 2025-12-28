@@ -6,6 +6,7 @@ import { appState } from './state.js';
 import { attachTransformControls } from './viewer.js';
 import { addMessageToChat } from './ui.js';
 import { computePhysicalProperties } from './properties.js'; // Import for immutable props
+import { updateParametricMesh } from './commands/primitive_cmds.js'; // Import regeneration logic
 
 const treePanel = document.getElementById('feature-tree');
 const treeContent = document.getElementById('tree-content');
@@ -249,7 +250,8 @@ function createTreeNode(obj) {
         // Allow selecting meshes (models), and Work Features.
         const isInteractive = (
             (obj.name === 'loaded_glb' || obj.name === 'fallback_cube') ||
-            (obj.userData && (obj.userData.type === 'WorkPlane' || obj.userData.type === 'WorkAxis' || obj.userData.type === 'WorkPoint'))
+            (obj.userData && (obj.userData.type === 'WorkPlane' || obj.userData.type === 'WorkAxis' || obj.userData.type === 'WorkPoint')) ||
+            (obj.userData && obj.userData.isParametric) // Select parametric shapes
         );
 
         if (isInteractive) {
@@ -310,7 +312,8 @@ function renderPropertiesList(container, obj) {
     if (!obj.userData) obj.userData = {};
     
     Object.keys(obj.userData).forEach(key => {
-        if (key === 'filename' || key === 'sourceUrl' || key === 'type') return;
+        // Hide internal system keys
+        if (key === 'filename' || key === 'sourceUrl' || key === 'type' || key === 'isParametric' || key === 'shapeType') return;
         
         const row = document.createElement('li');
         row.className = 'prop-row';
@@ -323,8 +326,17 @@ function renderPropertiesList(container, obj) {
         valInput.className = 'prop-input prop-val';
         valInput.value = obj.userData[key];
         
+        // Handle Property Change
         valInput.addEventListener('change', () => {
              obj.userData[key] = valInput.value;
+             
+             // --- Parametric Update Trigger ---
+             if (obj.userData.isParametric) {
+                 updateParametricMesh(obj);
+                 // Refresh physics calculation visually by re-rendering list (optional, but good for feedback)
+                 // But focus is lost if we re-render immediately. 
+                 // We will update the Name to reflect changes if needed, but let's keep it simple.
+             }
         });
 
         const delBtn = document.createElement('button');
@@ -333,6 +345,7 @@ function renderPropertiesList(container, obj) {
         delBtn.title = "Remove Variable";
         delBtn.addEventListener('click', () => {
             delete obj.userData[key];
+            if (obj.userData.isParametric) updateParametricMesh(obj);
             renderPropertiesList(container, obj); 
         });
 
@@ -366,6 +379,7 @@ function renderPropertiesList(container, obj) {
         const v = newValInput.value.trim();
         if (k) {
             obj.userData[k] = v;
+            if (obj.userData.isParametric) updateParametricMesh(obj);
             renderPropertiesList(container, obj);
         }
     };

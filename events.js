@@ -13,6 +13,7 @@ import { toggleCollisions } from './collisions.js';
 import { toggleOrigin } from './origin.js'; 
 import { addMessageToChat } from './ui.js';
 import { recordAction, downloadSession, uploadAndRestoreSession } from './recorder.js'; // Import recorder
+import { createSketchShape, exitSketchMode } from './sketch.js'; // Import Sketch logic
 
 export function bindGlobalEvents() {
     // Session Controls
@@ -44,6 +45,23 @@ export function bindGlobalEvents() {
     document.getElementById('tree-btn').addEventListener('click', () => { toggleFeatureTree(); recordAction('tool', 'tree'); });
     document.getElementById('collision-btn').addEventListener('click', () => { toggleCollisions(); recordAction('tool', 'collision'); });
     document.getElementById('origin-btn').addEventListener('click', () => { toggleOrigin(); recordAction('tool', 'origin'); });
+
+    // Sketch Panel Controls
+    const sketchLineBtn = document.getElementById('sketch-line-btn');
+    if (sketchLineBtn) sketchLineBtn.addEventListener('click', () => { createSketchShape('line', []); recordAction('sketch', 'line'); });
+    
+    const sketchRectBtn = document.getElementById('sketch-rect-btn');
+    if (sketchRectBtn) sketchRectBtn.addEventListener('click', () => { createSketchShape('rect', []); recordAction('sketch', 'rect'); });
+    
+    const sketchCircleBtn = document.getElementById('sketch-circle-btn');
+    if (sketchCircleBtn) sketchCircleBtn.addEventListener('click', () => { createSketchShape('circle', []); recordAction('sketch', 'circle'); });
+    
+    const sketchOkBtn = document.getElementById('sketch-ok-btn');
+    if (sketchOkBtn) sketchOkBtn.addEventListener('click', () => { exitSketchMode(); recordAction('sketch', 'ok'); });
+    
+    const sketchCancelBtn = document.getElementById('sketch-cancel-btn');
+    if (sketchCancelBtn) sketchCancelBtn.addEventListener('click', () => { exitSketchMode(); recordAction('sketch', 'cancel'); });
+
 
     // Theme Controls
     const themeBtn = document.getElementById('theme-btn');

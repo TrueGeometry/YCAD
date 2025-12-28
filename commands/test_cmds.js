@@ -73,6 +73,18 @@ export function getTestCommands(executor) {
                     { cmd: '/workaxis angle Y Z 30', delay: 1500, narration: txt.rot_axis },
                     { cmd: '/view fit', delay: 500 },
 
+                    // --- NEW: Test Parametric Shapes ---
+                    { cmd: '/parametric cylinder 1 1 5', delay: 2000, narration: txt.param_add },
+                    { cmd: '/view fit', delay: 1000 },
+
+                    // --- NEW: Test Sketch Mode ---
+                    { cmd: '/sketch_on XY', delay: 2000, narration: txt.sketch_start },
+                    { cmd: '/sketch_draw rect 10 6', delay: 1500, narration: txt.sketch_rect },
+                    { cmd: '/sketch_draw circle 2.5', delay: 1500, narration: txt.sketch_circ },
+                    { cmd: '/sketch_draw line -5 -5 5 5', delay: 1500, narration: txt.sketch_line },
+                    { cmd: '/sketch_off', delay: 2000, narration: txt.sketch_end },
+                    { cmd: '/view fit', delay: 1000 },
+
                     // Add a specific test model
                     { cmd: '/add https://s3-us-west-2.amazonaws.com/pion.truegeometry.com/geometryProgram//tmp/TGREC-da7882e70302eccc0b9e3537fb04a82c.glb', delay: 4000, narration: txt.load_model },
                     { cmd: '/view fit', delay: 1000, narration: txt.focus_model },

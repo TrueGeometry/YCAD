@@ -150,6 +150,8 @@ function checkForMention(text, cursorIndex) {
             context = 'kbe';
         } else if (['/parametric', '/parameteric', '/addshape'].includes(firstWord)) {
             context = 'parametric';
+        } else if (firstWord === '/sketch_on') {
+            context = 'plane';
         }
         
         showMentionSuggestions(query, context);
@@ -228,6 +230,21 @@ function showMentionSuggestions(query, context) {
         filtered.forEach(item => {
              createMentionItem(item.name, 'box-select', '#8b5cf6', 'Parametric', () => {
                  applyMention({ name: item.name, isParametricType: true });
+             });
+             hasItems = true;
+        });
+    } else if (context === 'plane') {
+        // Plane Context: Show only Work Planes (Origin or Custom)
+        const objects = getTaggableObjects();
+        const filtered = objects.filter(o => 
+            o.name.toLowerCase().includes(query) && 
+            o.object.userData && 
+            o.object.userData.type === 'WorkPlane'
+        );
+        
+        filtered.forEach(obj => {
+             createMentionItem(obj.name, 'square', '#f59e0b', 'Work Plane', () => {
+                 applyMention(obj);
              });
              hasItems = true;
         });

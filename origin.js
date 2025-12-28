@@ -90,7 +90,7 @@ export function toggleOrigin() {
 }
 
 // Helper to find features loosely
-function findWorkFeature(name) {
+export function findWorkFeature(name) {
     const origin = appState.scene.getObjectByName("Origin");
     const wfGroup = appState.scene.getObjectByName("Work Features");
     

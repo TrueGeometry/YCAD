@@ -34,6 +34,24 @@
                 <div id="collision-warning">⚠️ Collision Detected!</div>
             </div>
             
+            <!-- Pop-up: Sketch Controls (Top Ribbon style) -->
+            <div id="sketch-controls" class="popup-control-panel" style="top: 10px; bottom: auto; left: 50%; transform: translateX(-50%); width: auto; display: none; border-top: 4px solid #10b981;">
+                <div class="flex items-center gap-2 mb-1">
+                    <i data-lucide="pencil" class="w-4 h-4 text-emerald-600"></i>
+                    <span class="text-xs font-bold uppercase text-emerald-700">Sketch Mode</span>
+                </div>
+                <div class="section-row" style="gap: 8px;">
+                    <button id="sketch-line-btn" title="Line" style="padding: 6px 12px;"><i data-lucide="minus"></i></button>
+                    <button id="sketch-rect-btn" title="Rectangle" style="padding: 6px 12px;"><i data-lucide="rectangle-horizontal"></i></button>
+                    <button id="sketch-circle-btn" title="Circle" style="padding: 6px 12px;"><i data-lucide="circle"></i></button>
+                </div>
+                <div style="height:1px; background:#eee; margin:6px 0;"></div>
+                <div class="section-row">
+                    <button id="sketch-ok-btn" title="Finish Sketch" style="color:white; background-color:#10b981; border:none;">OK <i data-lucide="check" style="width:14px;"></i></button>
+                    <button id="sketch-cancel-btn" title="Cancel" style="color:#ef4444; background:none; border:1px solid #fee2e2;">Cancel</button>
+                </div>
+            </div>
+
             <!-- Pop-up: Section Controls -->
             <div id="section-controls" class="popup-control-panel">
                 <div class="section-row">
