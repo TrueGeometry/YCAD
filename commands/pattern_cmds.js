@@ -13,8 +13,8 @@ export const patternCommands = {
             // Attempt to resolve target if @mention is present
             const { object, name } = resolveTarget(argRaw);
             
-            // Clean args: remove the @mention part so we can parse numbers
-            const cleanArgs = argRaw.replace(/@[\w\d_-]+/, '').trim();
+            // Clean args: remove the @mention part - updated regex for dots
+            const cleanArgs = argRaw.replace(/@[\w\d_.-]+/, '').trim();
             const args = cleanArgs.split(/\s+/).map(s => s.trim().toLowerCase());
             
             const type = args[0];

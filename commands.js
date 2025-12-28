@@ -11,6 +11,7 @@ import { viewCommands } from './commands/view_cmds.js';
 import { kbeCommands } from './commands/kbe_cmds.js'; // Import KBE commands
 import { primitiveCommands } from './commands/primitive_cmds.js'; // Import Primitive commands
 import { sketchCommands } from './commands/sketch_cmds.js'; // Import Sketch commands
+import { csgCommands } from './commands/csg_cmds.js'; // Import CSG commands
 import { getTestCommands } from './commands/test_cmds.js';
 import { recordAction } from './recorder.js'; // Import recorder
 
@@ -24,6 +25,7 @@ const COMMAND_REGISTRY = {
     ...kbeCommands,
     ...primitiveCommands, // Register Primitives
     ...sketchCommands,    // Register Sketch Commands
+    ...csgCommands,       // Register CSG Commands
     // Inject the executor so the test module can run commands without circular imports
     ...getTestCommands((cmd) => executeCommand(cmd)),
 

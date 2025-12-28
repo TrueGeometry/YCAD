@@ -49,8 +49,8 @@ export const viewCommands = {
             // Annotation creation: /annotate @Obj Text
             const { object, name } = resolveTarget(argRaw);
             
-            // Extract text: Remove the @Mention part
-            const text = argRaw.replace(/@[\w\d_-]+/, '').trim();
+            // Extract text: Remove the @Mention part - updated regex for dots
+            const text = argRaw.replace(/@[\w\d_.-]+/, '').trim();
             
             if (object) {
                 if (!text) {

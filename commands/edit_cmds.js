@@ -92,8 +92,8 @@ export const editCommands = {
     '/dock': {
         desc: 'Snap object to another (@Src @Tgt)',
         execute: (argRaw) => {
-            // Parse arguments for mentions
-            const mentions = argRaw.match(/@([\w\d_-]+)/g);
+            // Parse arguments for mentions - Updated for dots
+            const mentions = argRaw.match(/@([\w\d_.-]+)/g);
             const objects = getTaggableObjects();
             
             let sourceObj = null;
@@ -198,7 +198,8 @@ export const editCommands = {
             const { object, name } = resolveTarget(argRaw);
             if (!object) { addMessageToChat('system', '⚠️ No object selected.'); return; }
             
-            const clean = argRaw.replace(/@[\w\d_-]+/g, '').trim();
+            // Updated regex replacement
+            const clean = argRaw.replace(/@[\w\d_.-]+/g, '').trim();
             const args = clean.split(/\s+/);
             
             if (args.length < 2) { addMessageToChat('system', 'Usage: /setprop key value'); return; }
@@ -220,7 +221,8 @@ export const editCommands = {
             const { object, name } = resolveTarget(argRaw);
             if (!object) { addMessageToChat('system', '⚠️ No object selected.'); return; }
             
-            const clean = argRaw.replace(/@[\w\d_-]+/g, '').trim();
+            // Updated regex replacement
+            const clean = argRaw.replace(/@[\w\d_.-]+/g, '').trim();
             const key = clean.split(/\s+/)[0];
             
             if (!key) return;

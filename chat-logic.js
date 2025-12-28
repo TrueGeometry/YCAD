@@ -323,7 +323,7 @@ function handleMessageSend() {
 
          // 2. Check for implicit KBE Model load (shorthand: just @ModelName)
          // Matches "@SomeModel" exactly, ignoring surrounding whitespace
-         const kbeMatch = message.match(/^@([\w\d_-]+)$/);
+         const kbeMatch = message.match(/^@([\w\d_.-]+)$/);
          if (kbeMatch) {
              const potentialName = kbeMatch[1];
              const isKBE = KBE_ASSETS.some(a => a.name.toLowerCase() === potentialName.toLowerCase());
@@ -336,7 +336,8 @@ function handleMessageSend() {
          }
 
          // --- Check for multiple mentions to create a group shot ---
-         const mentions = (message.match(/@[\w\d_-]+/g) || [])
+         // Updated regex for dots
+         const mentions = (message.match(/@[\w\d_.-]+/g) || [])
                             .map(m => m.substring(1).toLowerCase());
          
          if (mentions.length > 1) {

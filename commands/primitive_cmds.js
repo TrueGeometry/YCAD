@@ -63,6 +63,23 @@ export const SHAPE_CONFIG = {
         defaults: [2, 0.4],
         factory: (p) => new THREE.TorusGeometry(p.radius, p.tube, 16, 64)
     },
+    extrusion: {
+        keys: ['height'],
+        defaults: [5],
+        factory: (p) => {
+             if (!p.profile || !Array.isArray(p.profile)) return new THREE.BufferGeometry();
+             
+             // Ensure proper Vector2 objects
+             const points = p.profile.map(pt => new THREE.Vector2(pt.x, pt.y));
+             const shape = new THREE.Shape(points);
+             
+             return new THREE.ExtrudeGeometry(shape, {
+                depth: p.height, // Map 'height' param to extrusion depth
+                bevelEnabled: false,
+                steps: 1
+            });
+        }
+    },
     // --- 2D Sketch Shapes (Used by Sketch Mode) ---
     sketch_rect: {
         keys: ['width', 'height'],
@@ -126,20 +143,21 @@ export function updateParametricMesh(mesh) {
         params[key] = val;
     });
 
-    // 2. Generate new Geometry
+    // 2. Pass hidden/complex data (like 2D profile for extrusions)
+    if (mesh.userData.profile) {
+        params.profile = mesh.userData.profile;
+    }
+
+    // 3. Generate new Geometry
     try {
         const newGeo = config.factory(params);
         
-        // 3. Dispose old geometry
+        // 4. Dispose old geometry
         if (mesh.geometry) mesh.geometry.dispose();
         
-        // 4. Assign new geometry
+        // 5. Assign new geometry
         mesh.geometry = newGeo;
         
-        // 5. Update Name if it matches standard pattern (optional QoL)
-        // e.g. "Sphere_R1" -> "Sphere_R2"
-        // For now, we leave the name alone to avoid confusing the user if they renamed it.
-
     } catch (e) {
         console.error("Error regenerating geometry:", e);
     }

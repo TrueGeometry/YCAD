@@ -6,6 +6,7 @@ import { appState } from './state.js';
 import { addMessageToChat } from './ui.js';
 import { attachTransformControls } from './viewer.js';
 import { highlightInTree } from './tree.js'; // Import selection sync
+import { isSketchDrawing, onSketchClick, onSketchMove } from './sketch.js'; // Import sketch helpers
 
 const measureLabel = document.getElementById('measure-label');
 const designCanvas = document.getElementById('design-canvas');
@@ -117,6 +118,12 @@ export function onCanvasClick(event) {
     mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
     raycaster.setFromCamera(mouse, appState.camera);
     
+    // --- SKETCH MODE DELEGATION ---
+    if (isSketchDrawing()) {
+        onSketchClick(event, raycaster);
+        return; // Consume click
+    }
+
     // If a tool is active, perform tool logic
     if (currentTool) {
         const intersects = raycaster.intersectObjects(appState.scene.children, true);
@@ -149,14 +156,11 @@ export function onCanvasClick(event) {
                      
                      if (n === 'GridHelper' || n === 'Origin' || n === 'Work Features') return false;
                      if (t === 'TransformControls') return false;
-                     if (t.includes('Light')) return false;
-                     if (t.includes('Helper')) return false;
-                     if (t.includes('Camera')) return false;
+                     if (t.includes('Light') || t.includes('Helper') || t.includes('Camera')) return false;
                      
                      return true; // Valid user object
                 }
                 
-                // Don't select the gizmo parts
                 if (obj.type === 'TransformControlsPlane' || obj.type === 'TransformControlsGizmo') return false; 
                 
                 obj = obj.parent;
@@ -168,8 +172,6 @@ export function onCanvasClick(event) {
             let target = hit.object;
             
             // Determine the "selectable root" for this hit
-            
-            // Check if it belongs to a user Model/Group
             let p = target;
             let modelRoot = null;
             while(p && p.parent) {
@@ -187,7 +189,6 @@ export function onCanvasClick(event) {
             if (modelRoot) {
                 target = modelRoot;
             } else {
-                // If no model root found (e.g. Work Feature inside group), traverse up to the Group child.
                 let curr = hit.object;
                 while (curr.parent && curr.parent.name !== 'Origin' && curr.parent.name !== 'Work Features' && curr.parent.type !== 'Scene') {
                     curr = curr.parent;
@@ -201,13 +202,25 @@ export function onCanvasClick(event) {
             highlightInTree(target);
             
         } else {
-            // Clicked empty space: Deselect All
             attachTransformControls(null);
             appState.selectedObject = null;
-            // Note: We keep currentDisplayObject as the last loaded model context if needed, 
-            // but for editing commands relying on selection, selectedObject being null handles safety.
             highlightInTree(null);
         }
+    }
+}
+
+// Added to handle mouse movement for rubber-banding tools
+export function onCanvasMove(event) {
+    if (!appState.camera || !appState.scene) return;
+    
+    // Only process if in a mode that needs movement updates (like Sketching)
+    if (isSketchDrawing()) {
+        const rect = designCanvas.getBoundingClientRect();
+        mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+        mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+        raycaster.setFromCamera(mouse, appState.camera);
+        
+        onSketchMove(event, raycaster);
     }
 }
 

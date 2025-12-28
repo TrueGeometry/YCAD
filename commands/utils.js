@@ -7,8 +7,9 @@ import { getTaggableObjects } from '../viewer.js';
 export function resolveTarget(argRaw) {
     let targetName = null;
     
-    // 1. Check for explicit @mention (e.g., /delete @Cube_1)
-    const match = argRaw ? argRaw.match(/@([\w\d_-]+)/) : null;
+    // 1. Check for explicit @mention (e.g., /delete @Cube_1 or @Model.glb)
+    // Updated regex to include dots
+    const match = argRaw ? argRaw.match(/@([\w\d_.-]+)/) : null;
     if (match) {
         targetName = match[1];
     }

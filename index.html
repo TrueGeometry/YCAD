@@ -40,10 +40,16 @@
                     <i data-lucide="pencil" class="w-4 h-4 text-emerald-600"></i>
                     <span class="text-xs font-bold uppercase text-emerald-700">Sketch Mode</span>
                 </div>
-                <div class="section-row" style="gap: 8px;">
+                <div class="section-row" style="gap: 8px; align-items:center;">
                     <button id="sketch-line-btn" title="Line" style="padding: 6px 12px;"><i data-lucide="minus"></i></button>
                     <button id="sketch-rect-btn" title="Rectangle" style="padding: 6px 12px;"><i data-lucide="rectangle-horizontal"></i></button>
                     <button id="sketch-circle-btn" title="Circle" style="padding: 6px 12px;"><i data-lucide="circle"></i></button>
+                    <div style="width:1px; height:20px; background:#ddd; margin:0 4px;"></div>
+                    <button id="sketch-poly-btn" title="Polyline" style="padding: 6px 12px;"><i data-lucide="activity"></i></button>
+                </div>
+                <div class="flex items-center gap-2 mt-2 mb-2 px-1">
+                     <input type="checkbox" id="sketch-autoclose" class="accent-emerald-600 w-4 h-4">
+                     <label for="sketch-autoclose" class="text-xs text-gray-700 font-semibold select-none cursor-pointer">Auto-Close Loop</label>
                 </div>
                 <div style="height:1px; background:#eee; margin:6px 0;"></div>
                 <div class="section-row">
@@ -112,6 +118,13 @@
                     <button id="side-view-btn" title="Side View" class="icon-only"><i data-lucide="rectangle-vertical"></i></button>
                     <button id="iso-view-btn" title="Iso View" class="icon-only"><i data-lucide="box"></i></button>
                     <button id="fit-view-btn" title="Fit to Screen" class="icon-only"><i data-lucide="maximize"></i></button>
+                </div>
+
+                <!-- Modeling Group (NEW) -->
+                <div class="control-group">
+                    <button id="extrude-btn" title="Extrude Sketch" class="icon-only"><i data-lucide="arrow-up-circle"></i></button>
+                    <button id="csg-sub-btn" title="Subtract (Cut)" class="icon-only"><i data-lucide="scissors-line-dashed"></i></button>
+                    <button id="csg-union-btn" title="Union (Join)" class="icon-only"><i data-lucide="combine"></i></button>
                 </div>
 
                 <!-- Manipulation Group -->
