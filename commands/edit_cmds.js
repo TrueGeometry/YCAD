@@ -5,6 +5,7 @@ import { addMessageToChat } from '../ui.js';
 import { resolveTarget } from './utils.js';
 import { deleteObject, highlightInTree, updateFeatureTree } from '../tree.js';
 import { attachTransformControls, setTransformMode, getTaggableObjects } from '../viewer.js';
+import { performUndo, performRedo } from '../history.js';
 
 export const editCommands = {
     '/delete': {
@@ -234,6 +235,20 @@ export const editCommands = {
             } else {
                 addMessageToChat('system', `Property ${key} not found.`);
             }
+        }
+    },
+
+    '/undo': {
+        desc: 'Undo last action',
+        execute: () => {
+            performUndo();
+        }
+    },
+
+    '/redo': {
+        desc: 'Redo last action',
+        execute: () => {
+            performRedo();
         }
     }
 };

@@ -45,6 +45,7 @@
                     <button id="sketch-rect-btn" title="Rectangle" style="padding: 6px 12px;"><i data-lucide="rectangle-horizontal"></i></button>
                     <button id="sketch-circle-btn" title="Circle" style="padding: 6px 12px;"><i data-lucide="circle"></i></button>
                     <button id="sketch-eq-btn" title="Parametric Equation f(t)" style="padding: 6px 12px; font-family:serif; font-weight:bold; font-style:italic;">f(t)</button>
+                    <button id="sketch-composite-btn" title="Composite Curve" style="padding: 6px 12px;"><i data-lucide="merge"></i></button>
                     <div style="width:1px; height:20px; background:#ddd; margin:0 4px;"></div>
                     <button id="sketch-poly-btn" title="Polyline" style="padding: 6px 12px;"><i data-lucide="activity"></i></button>
                 </div>
@@ -57,6 +58,28 @@
                     <button id="sketch-ok-btn" title="Finish Sketch" style="color:white; background-color:#10b981; border:none;">OK <i data-lucide="check" style="width:14px;"></i></button>
                     <button id="sketch-cancel-btn" title="Cancel" style="color:#ef4444; background:none; border:1px solid #fee2e2;">Cancel</button>
                 </div>
+            </div>
+
+            <!-- Pop-up: Composite Curve Builder -->
+            <div id="composite-controls" class="popup-control-panel" style="top: 80px; bottom: auto; left: 50%; transform: translateX(-50%); width: 320px; max-height: 500px; display: none; overflow-y: auto;">
+                <div class="flex items-center justify-between mb-2 pb-2 border-b border-gray-200">
+                    <span class="text-sm font-bold text-gray-700">Composite Builder</span>
+                    <button id="comp-close-btn" class="text-gray-400 hover:text-red-500"><i data-lucide="x" style="width:14px;"></i></button>
+                </div>
+                <div id="composite-segments-list" class="flex flex-col gap-2 mb-3">
+                    <!-- Segments injected here -->
+                </div>
+                <div class="grid grid-cols-2 gap-2 mb-3">
+                    <button id="comp-add-eq" class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 py-1 px-2 rounded border border-gray-300 flex items-center justify-center gap-1">
+                        <i data-lucide="function-square" style="width:12px;"></i> + Equation
+                    </button>
+                    <button id="comp-add-line" class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 py-1 px-2 rounded border border-gray-300 flex items-center justify-center gap-1">
+                        <i data-lucide="minus" style="width:12px;"></i> + Line To
+                    </button>
+                </div>
+                <button id="comp-create-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold py-2 rounded shadow-sm">
+                    Create Composite Curve
+                </button>
             </div>
 
             <!-- Pop-up: Section Controls -->

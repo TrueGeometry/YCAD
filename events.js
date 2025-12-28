@@ -13,7 +13,7 @@ import { toggleCollisions } from './collisions.js';
 import { toggleOrigin } from './origin.js'; 
 import { addMessageToChat } from './ui.js';
 import { recordAction, downloadSession, uploadAndRestoreSession } from './recorder.js'; 
-import { createSketchShape, exitSketchMode, togglePolylineTool, finishPolyline, promptForEquation } from './sketch.js'; 
+import { createSketchShape, exitSketchMode, togglePolylineTool, finishPolyline, promptForEquation, toggleCompositePanel, addCompositeSegmentRow, createCompositeFromUI } from './sketch.js'; 
 import { executeCommand } from './commands.js'; 
 import { performUndo, performRedo } from './history.js'; // Import History
 
@@ -90,6 +90,7 @@ export function bindGlobalEvents() {
     bindClick('sketch-rect-btn', () => { createSketchShape('rect', []); recordAction('sketch', 'rect'); });
     bindClick('sketch-circle-btn', () => { createSketchShape('circle', []); recordAction('sketch', 'circle'); });
     bindClick('sketch-eq-btn', () => { promptForEquation(); recordAction('sketch', 'equation'); }); 
+    bindClick('sketch-composite-btn', () => { toggleCompositePanel(); recordAction('sketch', 'composite_panel'); });
     bindClick('sketch-poly-btn', () => { togglePolylineTool(); recordAction('sketch', 'polyline_tool'); });
     
     bindClick('sketch-ok-btn', () => { 
@@ -100,6 +101,11 @@ export function bindGlobalEvents() {
     
     bindClick('sketch-cancel-btn', () => { exitSketchMode(); recordAction('sketch', 'cancel'); });
 
+    // Composite Builder Controls
+    bindClick('comp-close-btn', () => { toggleCompositePanel(); });
+    bindClick('comp-add-eq', () => { addCompositeSegmentRow('equation'); });
+    bindClick('comp-add-line', () => { addCompositeSegmentRow('line'); });
+    bindClick('comp-create-btn', () => { createCompositeFromUI(); recordAction('sketch', 'composite_create'); });
 
     // Theme Controls
     const themeBtn = document.getElementById('theme-btn');

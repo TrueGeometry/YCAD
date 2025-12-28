@@ -21,6 +21,7 @@ export const TRANSLATIONS = {
         sketch_start: "Entering Sketch Mode on XY Plane.",
         sketch_rect: "Drawing a 2D rectangle profile.",
         sketch_circ: "Drawing a 2D circle profile.",
+        sketch_eq: "Sketching a parametric equation.",
         sketch_end: "Exiting Sketch Mode.",
         extrude: "Extruding the sketch into a 3D solid.",
         param_change: "Modifying the extrusion height dynamically.",
@@ -65,6 +66,9 @@ export const TRANSLATIONS = {
         obj_del: "Deleting the selected component.",
         tree_hide: "Closing Feature Tree panel.",
         
+        history_undo: "Undoing the last operation.",
+        history_redo: "Redoing the operation.",
+
         save_session: "Saving the session state to a local file.",
         final_iso: "Switching to isometric view.",
         complete: "Test suite completed successfully."
@@ -85,6 +89,7 @@ export const TRANSLATIONS = {
         sketch_start: "XY प्लेन पर स्केच मोड शुरू किया जा रहा है।",
         sketch_rect: "एक 2D आयत बनाया जा रहा है।",
         sketch_circ: "एक 2D वृत्त बनाया जा रहा है।",
+        sketch_eq: "पैरामीट्रिक समीकरण का स्केच बनाया जा रहा है।",
         sketch_end: "स्केच मोड बंद किया जा रहा है।",
         extrude: "स्केच को 3D में एक्सट्रूड किया जा रहा है।",
         param_change: "एक्सट्रूज़न की ऊंचाई को गतिशील रूप से संशोधित किया जा रहा है।",
@@ -121,6 +126,8 @@ export const TRANSLATIONS = {
         prop_del: "कस्टम प्रॉपर्टी हटाई जा रही है।",
         obj_del: "चयनित घटक हटाया जा रहा है।",
         tree_hide: "फीचर ट्री पैनल बंद किया जा रहा है।",
+        history_undo: "पिछली कार्रवाई को पूर्ववत (Undo) किया जा रहा है।",
+        history_redo: "कार्रवाई को फिर से (Redo) किया जा रहा है।",
         save_session: "सत्र स्टेट को सेव किया जा रहा है।",
         final_iso: "आइसोमेट्रिक दृश्य में स्विच किया जा रहा है।",
         complete: "टेस्ट सूट सफलतापूर्वक पूरा हुआ।"
@@ -141,6 +148,7 @@ export const TRANSLATIONS = {
         sketch_start: "Entrando en modo de croquis en el plano XY.",
         sketch_rect: "Dibujando un perfil rectangular.",
         sketch_circ: "Dibujando un perfil circular.",
+        sketch_eq: "Dibujando una ecuación paramétrica.",
         sketch_end: "Saliendo del modo de croquis.",
         extrude: "Extruyendo el croquis a 3D.",
         param_change: "Modificando dinámicamente la altura de extrusión.",
@@ -177,6 +185,8 @@ export const TRANSLATIONS = {
         prop_del: "Eliminando la propiedad personalizada.",
         obj_del: "Eliminando el componente seleccionado.",
         tree_hide: "Cerrando el panel del Árbol de Características.",
+        history_undo: "Deshaciendo la última acción.",
+        history_redo: "Rehaciendo la acción.",
         save_session: "Guardando el estado de la sesión.",
         final_iso: "Cambiando a vista isométrica.",
         complete: "Suite de pruebas completada con éxito."
@@ -197,6 +207,7 @@ export const TRANSLATIONS = {
         sketch_start: "进入 XY 平面草图模式。",
         sketch_rect: "绘制 2D 矩形轮廓。",
         sketch_circ: "绘制 2D 圆形轮廓。",
+        sketch_eq: "绘制参数方程。",
         sketch_end: "退出草图模式。",
         extrude: "将草图拉伸为 3D 实体。",
         param_change: "动态修改拉伸高度。",
@@ -233,6 +244,8 @@ export const TRANSLATIONS = {
         prop_del: "删除自定义属性。",
         obj_del: "删除选定的组件。",
         tree_hide: "关闭功能树面板。",
+        history_undo: "撤消上一次操作。",
+        history_redo: "重做该操作。",
         save_session: "保存会话状态。",
         final_iso: "切换回等轴测视图。",
         complete: "测试套件成功完成。"
@@ -253,6 +266,7 @@ export const TRANSLATIONS = {
         sketch_start: "Вход в режим эскиза на плоскости XY.",
         sketch_rect: "Рисование 2D прямоугольника.",
         sketch_circ: "Рисование 2D окружности.",
+        sketch_eq: "Рисование параметрического уравнения.",
         sketch_end: "Выход из режима эскиза.",
         extrude: "Выдавливание эскиза в 3D.",
         param_change: "Динамическое изменение высоты выдавливания.",
@@ -289,6 +303,8 @@ export const TRANSLATIONS = {
         prop_del: "Удаление пользовательского свойства.",
         obj_del: "Удаление выбранного компонента.",
         tree_hide: "Закрытие дерева функций.",
+        history_undo: "Отмена последнего действия.",
+        history_redo: "Повтор действия.",
         save_session: "Сохранение сеанса.",
         final_iso: "Переключение в изометрический вид.",
         complete: "Набор тестов успешно выполнен."

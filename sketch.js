@@ -121,6 +121,107 @@ export function promptForEquation() {
     }
 }
 
+// --- Composite Curve Builder UI ---
+
+export function toggleCompositePanel() {
+    if (!sketchState.isActive) return;
+    
+    const panel = document.getElementById('composite-controls');
+    if (!panel) return;
+    
+    if (panel.style.display === 'block') {
+        panel.style.display = 'none';
+    } else {
+        panel.style.display = 'block';
+        const list = document.getElementById('composite-segments-list');
+        if (list && list.children.length === 0) {
+            // Add default segment if empty
+            addCompositeSegmentRow('equation');
+        }
+    }
+}
+
+export function addCompositeSegmentRow(type) {
+    const list = document.getElementById('composite-segments-list');
+    if (!list) return;
+
+    const row = document.createElement('div');
+    row.className = 'bg-gray-50 p-2 rounded border border-gray-200 text-xs flex flex-col gap-1 relative composite-row';
+    row.dataset.type = type;
+
+    // Remove Button
+    const removeBtn = document.createElement('button');
+    removeBtn.className = 'absolute top-1 right-1 text-red-400 hover:text-red-600';
+    removeBtn.innerHTML = '×';
+    removeBtn.onclick = () => row.remove();
+    row.appendChild(removeBtn);
+
+    const title = document.createElement('div');
+    title.className = 'font-bold text-gray-600 mb-1';
+    title.innerText = type === 'equation' ? 'Equation Segment' : 'Line To Segment';
+    row.appendChild(title);
+
+    // Inputs Container
+    const inputsDiv = document.createElement('div');
+    inputsDiv.className = 'flex flex-col gap-1';
+    
+    if (type === 'equation') {
+        inputsDiv.innerHTML = `
+            <div class="flex gap-1 items-center"><span class="w-6 font-mono">X(t)</span><input class="border rounded px-1 flex-1 bg-white seg-x" value="2*cos(t)"></div>
+            <div class="flex gap-1 items-center"><span class="w-6 font-mono">Y(t)</span><input class="border rounded px-1 flex-1 bg-white seg-y" value="2*sin(t)"></div>
+            <div class="flex gap-2 text-[10px] items-center mt-1">
+                <span>Min</span><input class="border rounded px-1 w-12 bg-white seg-min" type="number" value="0">
+                <span>Max</span><input class="border rounded px-1 w-12 bg-white seg-max" type="number" value="3.14">
+            </div>
+        `;
+    } else {
+        inputsDiv.innerHTML = `
+            <div class="flex gap-2">
+                <div class="flex gap-1 items-center"><span class="w-4 font-mono">X</span><input class="border rounded px-1 w-16 bg-white seg-x" type="number" value="0"></div>
+                <div class="flex gap-1 items-center"><span class="w-4 font-mono">Y</span><input class="border rounded px-1 w-16 bg-white seg-y" type="number" value="0"></div>
+            </div>
+        `;
+    }
+    row.appendChild(inputsDiv);
+
+    list.appendChild(row);
+}
+
+export function createCompositeFromUI() {
+    const list = document.getElementById('composite-segments-list');
+    if (!list) return;
+
+    const segments = [];
+    const rows = list.querySelectorAll('.composite-row');
+    
+    rows.forEach(row => {
+        const type = row.dataset.type;
+        if (type === 'equation') {
+            segments.push({
+                type: 'equation',
+                xEq: row.querySelector('.seg-x').value,
+                yEq: row.querySelector('.seg-y').value,
+                min: parseFloat(row.querySelector('.seg-min').value),
+                max: parseFloat(row.querySelector('.seg-max').value)
+            });
+        } else {
+            segments.push({
+                type: 'line',
+                x: parseFloat(row.querySelector('.seg-x').value),
+                y: parseFloat(row.querySelector('.seg-y').value)
+            });
+        }
+    });
+
+    if (segments.length > 0) {
+        // Use JSON string to pass complex data via the factory pattern
+        createSketchShape('composite', [JSON.stringify(segments)]);
+        document.getElementById('composite-controls').style.display = 'none';
+    } else {
+        addMessageToChat('system', '⚠️ Add at least one segment.');
+    }
+}
+
 // --- Manual Polyline Drawing ---
 
 export function togglePolylineTool() {
@@ -337,6 +438,7 @@ export function createSketchShape(type, args) {
     if (type === 'rect') configKey = 'sketch_rect';
     if (type === 'circle') configKey = 'sketch_circle';
     if (type === 'equation') configKey = 'sketch_equation';
+    if (type === 'composite') configKey = 'sketch_composite';
 
     const config = SHAPE_CONFIG[configKey];
     
@@ -361,7 +463,8 @@ export function createSketchShape(type, args) {
     const geometry = config.factory(params);
     const material = new THREE.LineBasicMaterial({ color: 0x00ff00, linewidth: 2 });
     // Use LineLoop for closed shapes, Line for open
-    const isClosed = (type === 'rect' || type === 'circle' || type === 'equation'); // Equation usually open but loop works
+    // For composite, assume open (Line) unless it looks closed, but user controls loops via segment logic usually.
+    const isClosed = (type === 'rect' || type === 'circle' || type === 'equation'); 
     const lineObj = isClosed ? new THREE.LineLoop(geometry, material) : new THREE.Line(geometry, material);
     
     lineObj.name = `Sketch${type.charAt(0).toUpperCase() + type.slice(1)}`;
@@ -370,6 +473,7 @@ export function createSketchShape(type, args) {
     Object.assign(lineObj.userData, params);
 
     // Generate Profile Data for Extrusion
+    // NOTE: This logic needs to extract Points from the Geometry for generic shapes like Composite
     if (type === 'rect') {
         const halfW = params.width / 2;
         const halfH = params.height / 2;
@@ -381,20 +485,22 @@ export function createSketchShape(type, args) {
         ];
         lineObj.userData.closed = true;
     } else if (type === 'circle') {
-        // Approximate circle with points
         const curve = new THREE.EllipseCurve(0, 0, params.radius, params.radius, 0, 2 * Math.PI, false, 0);
         lineObj.userData.profile = curve.getPoints(64);
         lineObj.userData.closed = true;
-    } else if (type === 'equation') {
-        // Convert BufferGeometry points to Profile
+    } else {
+        // Fallback for equation, composite, etc: Extract points from geometry
         const pos = geometry.attributes.position;
         const points = [];
         for(let i=0; i<pos.count; i++) {
             points.push(new THREE.Vector2(pos.getX(i), pos.getY(i)));
         }
         lineObj.userData.profile = points;
-        lineObj.userData.closed = true; // Assume closed for extrusion for now, or open?
-        // Let's assume loop for safety if user wants to extrude
+        // Simple heuristic for closed: start ~ end
+        if (points.length > 0) {
+            const d = points[0].distanceTo(points[points.length-1]);
+            lineObj.userData.closed = (d < 0.01);
+        }
     }
 
     sketchState.sketchGroup.add(lineObj);
@@ -419,6 +525,10 @@ export function exitSketchMode() {
         sketchControls.style.display = 'none';
     }
     
+    // Hide composite controls too
+    const compPanel = document.getElementById('composite-controls');
+    if(compPanel) compPanel.style.display = 'none';
+
     if (appState.controls) {
         appState.controls.enableRotate = true;
         addMessageToChat('system', 'View unlocked.');

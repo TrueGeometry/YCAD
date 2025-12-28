@@ -84,14 +84,20 @@ export function getTestCommands(executor) {
                     { cmd: '/sketch_on XY', delay: 2000, narration: txt.sketch_start },
                     { cmd: '/sketch_draw rect 10 6', delay: 1500, narration: txt.sketch_rect },
                     { cmd: '/sketch_draw circle 2.5', delay: 1500, narration: txt.sketch_circ },
+                    { cmd: '/sketch_draw equation', delay: 1500, narration: txt.sketch_eq }, 
                     { cmd: '/sketch_off', delay: 2000, narration: txt.sketch_end },
                     { cmd: '/extrude @SketchRect 5', delay: 2500, narration: txt.extrude },
                     { cmd: '/setprop @Extrude_SketchRect height 12', delay: 2500, narration: txt.param_change },
+                    
+                    // --- 4. History (Undo/Redo) ---
+                    { cmd: '/move 0 5 0', delay: 1000 },
+                    { cmd: '/undo', delay: 1500, narration: txt.history_undo },
+                    { cmd: '/redo', delay: 1500, narration: txt.history_redo },
 
                     { cmd: '/view iso', delay: 500 }, 
                     { cmd: '/view fit', delay: 1500, narration: txt.reset_view },
 
-                    // --- 4. Docking Test ---
+                    // --- 5. Docking Test ---
                     { cmd: '/parametric cube 4', delay: 1000, narration: txt.dock_setup },
                     { cmd: '/parametric cylinder 4 4 2', delay: 1000 },
                     { cmd: '/move 10 0 0', delay: 500 }, 
@@ -100,13 +106,13 @@ export function getTestCommands(executor) {
                     { cmd: '/view iso', delay: 500 }, 
                     { cmd: '/view fit', delay: 1500, narration: txt.reset_view },
 
-                    // --- 5. KBE Model ---
+                    // --- 6. KBE Model ---
                     { cmd: '/kbe_model @HelicalGear', delay: 4000, narration: txt.kbe_load },
                     
                     { cmd: '/view iso', delay: 500 }, 
                     { cmd: '/view fit', delay: 1500, narration: txt.reset_view },
 
-                    // --- 6. Loading & Assembly ---
+                    // --- 7. Loading & Assembly ---
                     { cmd: '/add https://s3-us-west-2.amazonaws.com/pion.truegeometry.com/geometryProgram//tmp/TGREC-da7882e70302eccc0b9e3537fb04a82c.glb', delay: 4000, narration: txt.load_model },
                     { cmd: '/view fit', delay: 1000, narration: txt.focus_model },
                     { cmd: '/move 15 5 0', delay: 1500, narration: txt.move },
@@ -120,7 +126,7 @@ export function getTestCommands(executor) {
                     { cmd: '/view iso', delay: 500 }, 
                     { cmd: '/view fit', delay: 1500, narration: txt.reset_view },
 
-                    // --- 7. Analysis & Visuals ---
+                    // --- 8. Analysis & Visuals ---
                     { cmd: '/bounds', delay: 1500, narration: txt.bounds },
                     { cmd: '/wireframe', delay: 1500, narration: txt.wireframe },
                     { cmd: '/wireframe', delay: 1000, narration: txt.solid }, 
@@ -140,7 +146,7 @@ export function getTestCommands(executor) {
                     { cmd: '/view iso', delay: 500 }, 
                     { cmd: '/view fit', delay: 1500, narration: txt.reset_view },
 
-                    // --- 8. Annotations, Tree & Data ---
+                    // --- 9. Annotations, Tree & Data ---
                     { cmd: '/annotate @Extrude_SketchRect Main_Part', delay: 2000, narration: txt.annot_add },
                     { cmd: '/hideannotations', delay: 1500, narration: txt.annot_hide },
                     { cmd: '/showannotations', delay: 1500, narration: txt.annot_show },
@@ -150,7 +156,7 @@ export function getTestCommands(executor) {
                     { cmd: '/delprop MaterialRef', delay: 2000, narration: txt.prop_del },
                     { cmd: '/tree', delay: 1000, narration: txt.tree_hide },
 
-                    // --- 9. Conclusion ---
+                    // --- 10. Conclusion ---
                     { cmd: '/save', delay: 2000, narration: txt.save_session },
                     { cmd: '/view iso', delay: 1500, narration: txt.final_iso },
                     { cmd: '/view fit', delay: 1000, narration: txt.complete }

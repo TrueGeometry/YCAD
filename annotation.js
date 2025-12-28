@@ -12,13 +12,13 @@ let areAnnotationsVisible = true;
 export function addAnnotation(object, text) {
     if (!object) return;
 
-    // Calculate center of the object to point to
+    // Calculate center of the object to point to (World Space)
     const box = new THREE.Box3().setFromObject(object);
     const center = new THREE.Vector3();
     if (!box.isEmpty()) {
         box.getCenter(center);
     } else {
-        center.copy(object.position);
+        object.getWorldPosition(center);
     }
 
     // Create HTML Structure
@@ -43,12 +43,13 @@ export function addAnnotation(object, text) {
 
     // Create CSS2D Object
     const label = new CSS2DObject(wrapper);
+    
+    // Convert the calculated World Center to the Object's Local Space
+    // This is necessary because we add the label as a child of the object (so it moves with it).
+    // If we just used 'center', it would be treated as a local offset, which is wrong if the object isn't at (0,0,0).
+    object.worldToLocal(center);
     label.position.copy(center);
     
-    // We attach the label directly to the scene so it doesn't rotate WITH the object's local transform 
-    // (which might flip text upside down if the object is rotated).
-    // However, if the object moves, we need the label to follow.
-    // Best approach: Add to the object, but CSS2D objects always face screen anyway.
     object.add(label);
     
     annotations.push(label);

@@ -63,23 +63,6 @@ export const SHAPE_CONFIG = {
         defaults: [2, 0.4],
         factory: (p) => new THREE.TorusGeometry(p.radius, p.tube, 16, 64)
     },
-    extrusion: {
-        keys: ['height'],
-        defaults: [5],
-        factory: (p) => {
-             if (!p.profile || !Array.isArray(p.profile)) return new THREE.BufferGeometry();
-             
-             // Ensure proper Vector2 objects
-             const points = p.profile.map(pt => new THREE.Vector2(pt.x, pt.y));
-             const shape = new THREE.Shape(points);
-             
-             return new THREE.ExtrudeGeometry(shape, {
-                depth: p.height, // Map 'height' param to extrusion depth
-                bevelEnabled: false,
-                steps: 1
-            });
-        }
-    },
     // --- 2D Sketch Shapes (Used by Sketch Mode) ---
     sketch_rect: {
         keys: ['width', 'height'],
@@ -139,6 +122,62 @@ export const SHAPE_CONFIG = {
              }
              return new THREE.BufferGeometry().setFromPoints(points);
         }
+    },
+    sketch_composite: {
+        keys: ['segments'],
+        defaults: ['[]'], // String default so it is passed as-is
+        factory: (p) => {
+            const points = [];
+            let segments = [];
+            try {
+                segments = typeof p.segments === 'string' ? JSON.parse(p.segments) : p.segments;
+            } catch(e) { console.warn("Invalid composite segments JSON", e); }
+
+            if (segments.length > 0) {
+                // Ensure starting at 0,0 or first explicit point
+                // Note: Line loop vs line is decided by user data closed prop later.
+                
+                segments.forEach(seg => {
+                    if (seg.type === 'equation') {
+                        const steps = seg.steps || 50;
+                        const fX = new Function('t', `const {sin,cos,tan,abs,pow,sqrt,PI,E,log,exp} = Math; return ${seg.xEq};`);
+                        const fY = new Function('t', `const {sin,cos,tan,abs,pow,sqrt,PI,E,log,exp} = Math; return ${seg.yEq};`);
+                        const dt = (seg.max - seg.min) / steps;
+                        for(let i=0; i<=steps; i++){
+                             const t = seg.min + i*dt;
+                             try { points.push(new THREE.Vector3(fX(t), fY(t), 0)); } catch(e){}
+                        }
+                    } else if (seg.type === 'line') {
+                        points.push(new THREE.Vector3(seg.x, seg.y, 0));
+                    }
+                });
+            } else {
+                // Default placeholder
+                points.push(new THREE.Vector3(0,0,0));
+                points.push(new THREE.Vector3(1,1,0));
+            }
+            
+            return new THREE.BufferGeometry().setFromPoints(points);
+        }
+    },
+    // --- 3D Operations ---
+    extrusion: {
+        keys: ['height'],
+        defaults: [5],
+        factory: (p) => {
+            if (!p.profile || !Array.isArray(p.profile)) {
+                console.warn("Extrusion missing profile data");
+                return new THREE.BoxGeometry(1, 1, p.height); // Fallback
+            }
+            
+            const shape = new THREE.Shape(p.profile.map(pt => new THREE.Vector2(pt.x, pt.y)));
+            const settings = {
+                depth: p.height,
+                bevelEnabled: false,
+                steps: 1
+            };
+            return new THREE.ExtrudeGeometry(shape, settings);
+        }
     }
 };
 
@@ -158,7 +197,7 @@ export function updateParametricMesh(mesh) {
     const params = {};
     config.keys.forEach(key => {
         const val = mesh.userData[key];
-        // Only parse as float if the default is not a string (supports equation strings)
+        // Only parse as float if the default is not a string (supports equation/json strings)
         const def = config.defaults[config.keys.indexOf(key)];
         if (typeof def === 'string') {
             params[key] = val !== undefined ? val : def;
@@ -206,13 +245,13 @@ export const primitiveCommands = {
             }
 
             const config = SHAPE_CONFIG[type];
-            const inputArgs = args.slice(1);
+            const inputParams = args.slice(1); // Keep as strings initially
             
             // Build the params object for creation
             const params = {};
             config.keys.forEach((key, index) => {
                 const def = config.defaults[index];
-                const raw = inputArgs[index];
+                const raw = inputParams[index];
                 
                 // Keep strings as strings if default is string
                 if (typeof def === 'string') {
@@ -237,8 +276,9 @@ export const primitiveCommands = {
                 
                 const mesh = new THREE.Mesh(geo, material);
                 
-                // Set Name based on parameters (simplification)
-                mesh.name = `${type.charAt(0).toUpperCase() + type.slice(1)}_${Date.now().toString().slice(-4)}`;
+                // Set Name based on parameters
+                const paramStr = Object.values(params).map(v => v).join('x');
+                mesh.name = `${type.charAt(0).toUpperCase() + type.slice(1)}_${paramStr.slice(0, 20)}`;
                 mesh.userData.filename = mesh.name;
                 
                 // MARK AS PARAMETRIC
