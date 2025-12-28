@@ -223,8 +223,15 @@ export function setTransformMode(mode) {
 export function attachTransformControls(object) {
     if (appState.transformControls) {
         if (object) {
-            appState.transformControls.attach(object);
-            appState.selectedObject = object;
+            appState.selectedObject = object; // Select it regardless of fixed state
+            
+            if (!object.userData.isFixed) {
+                appState.transformControls.attach(object);
+                appState.transformControls.visible = true; // Ensure visible
+            } else {
+                appState.transformControls.detach();
+                // If fixed, we effectively hide the gizmo functionality
+            }
         } else {
             appState.transformControls.detach();
             appState.selectedObject = null;

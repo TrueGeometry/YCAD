@@ -41,6 +41,7 @@ export function initOrigin() {
         
         mesh.name = name;
         mesh.userData.type = "WorkPlane";
+        mesh.userData.isFixed = true; // Prevent movement
         mesh.visible = true; // Visible by default
         return mesh;
     };
@@ -53,6 +54,7 @@ export function initOrigin() {
         const line = new THREE.Line(geo, new THREE.LineBasicMaterial({ color: colorHex }));
         line.name = name;
         line.userData.type = "WorkAxis";
+        line.userData.isFixed = true; // Prevent movement
         line.visible = true; // Visible by default
         return line;
     };
@@ -72,6 +74,7 @@ export function initOrigin() {
     const point = new THREE.Mesh(ptGeo, ptMat);
     point.name = "Center Point";
     point.userData.type = "WorkPoint";
+    point.userData.isFixed = true; // Prevent movement
     point.visible = true; // Visible by default
     originGroup.add(point);
 
@@ -134,6 +137,8 @@ export function createOffsetPlane(basePlaneName, offset) {
     const newPlane = base.clone();
     newPlane.name = `${base.name} Offset ${offset}`;
     newPlane.userData.type = 'WorkPlane';
+    // User created planes are not fixed by default (can be moved manually if needed)
+    delete newPlane.userData.isFixed; 
     newPlane.visible = true;
     
     // Apply local offset along normal
@@ -155,6 +160,7 @@ export function createOffsetAxis(baseAxisName, offsetDirection, offsetDist) {
     
     newAxis.name = `${base.name} Offset ${offsetDirection.toUpperCase()}${offsetDist}`;
     newAxis.userData.type = 'WorkAxis';
+    delete newAxis.userData.isFixed;
     newAxis.visible = true;
     
     const dist = parseFloat(offsetDist);
@@ -182,6 +188,7 @@ export function createRotatedPlane(basePlaneName, axisName, angleDeg) {
     const newPlane = base.clone();
     newPlane.name = `${base.name} Rot ${angleDeg}°`;
     newPlane.userData.type = 'WorkPlane';
+    delete newPlane.userData.isFixed;
     newPlane.visible = true;
 
     const angleRad = THREE.MathUtils.degToRad(parseFloat(angleDeg));
@@ -227,6 +234,7 @@ export function createRotatedAxis(baseAxisName, pivotAxisName, angleDeg) {
     newAxis.material = new THREE.LineBasicMaterial({ color: 0x00ffff });
     newAxis.name = `${base.name} Rot ${angleDeg}°`;
     newAxis.userData.type = 'WorkAxis';
+    delete newAxis.userData.isFixed;
     newAxis.visible = true;
 
     const angleRad = THREE.MathUtils.degToRad(parseFloat(angleDeg));

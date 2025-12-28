@@ -6,6 +6,7 @@ import { showPhysicalProperties, computePhysicalProperties } from '../properties
 import { toggleSectionMode, updateSectionAxis, resetSection, isSectionMode } from '../section.js';
 import { toggleTool, deactivateTools, toggleWireframe, toggleBoundingBox, addMeasurementPoint } from '../tools.js';
 import { toggleCollisions } from '../collisions.js';
+import { generateReport } from '../report.js';
 
 export const analyticsCommands = {
     '/props': {
@@ -28,6 +29,27 @@ export const analyticsCommands = {
         }
     },
     '/properties': { alias: '/props' },
+
+    '/report_gen': {
+        desc: 'Generate PDF Report (@Component optional)',
+        execute: (argRaw) => {
+            // Only target specific object if argument provided
+            if (argRaw && argRaw.trim().length > 0) {
+                const { object, name } = resolveTarget(argRaw);
+                
+                if (object) {
+                    addMessageToChat('system', `Generating report for component: ${name}...`);
+                    generateReport(object);
+                } else {
+                    addMessageToChat('system', `⚠️ Could not find component '${argRaw}'. Generating full assembly report instead.`);
+                    generateReport(null);
+                }
+            } else {
+                addMessageToChat('system', `Generating full assembly report...`);
+                generateReport(null);
+            }
+        }
+    },
 
     '/section': {
         desc: 'Section tool (x, y, z, off)',

@@ -12,6 +12,10 @@ export const editCommands = {
         execute: (argRaw) => {
             const { object, name } = resolveTarget(argRaw);
             if (object) {
+                if (object.userData.isFixed) {
+                    addMessageToChat('system', `⚠️ Cannot delete fixed object: ${name}`);
+                    return;
+                }
                 deleteObject(object);
             } else {
                 addMessageToChat('system', `⚠️ Object not found or none selected.`);
@@ -29,6 +33,11 @@ export const editCommands = {
                 addMessageToChat('system', '⚠️ No object selected to move.');
                 return;
             }
+            if (object.userData.isFixed) {
+                addMessageToChat('system', `⚠️ Cannot move fixed object: ${name}`);
+                return;
+            }
+
             const numbers = argRaw.match(/-?\d+(\.\d+)?/g);
             if (!numbers || numbers.length === 0) {
                 appState.currentDisplayObject = object;
@@ -56,6 +65,11 @@ export const editCommands = {
                 addMessageToChat('system', '⚠️ No object selected to rotate.');
                 return;
             }
+            if (object.userData.isFixed) {
+                addMessageToChat('system', `⚠️ Cannot rotate fixed object: ${name}`);
+                return;
+            }
+
             const numbers = argRaw.match(/-?\d+(\.\d+)?/g);
             if (!numbers || numbers.length === 0) {
                 appState.currentDisplayObject = object;
@@ -113,6 +127,11 @@ export const editCommands = {
 
             if (sourceObj === targetObj) {
                 addMessageToChat('system', '⚠️ Cannot dock an object to itself.');
+                return;
+            }
+            
+            if (sourceObj.userData.isFixed) {
+                addMessageToChat('system', `⚠️ Cannot dock fixed object: ${sourceName}`);
                 return;
             }
             

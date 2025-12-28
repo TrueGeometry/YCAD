@@ -71,14 +71,21 @@ export function initSketchMode(planeName) {
     // 3. Align Camera for better view (Look at plane)
     alignCameraToSketch(group);
     
-    // 4. Show Sketch Controls Panel
+    // 4. Lock View Rotation (Orthogonal Constraint)
+    if (appState.controls) {
+        appState.controls.enableRotate = false;
+        // Ensure damping doesn't drift the view away after locking
+        appState.controls.update(); 
+    }
+
+    // 5. Show Sketch Controls Panel
     const sketchControls = document.getElementById('sketch-controls');
     if (sketchControls) {
         sketchControls.style.display = 'block';
         if (window.lucide) window.lucide.createIcons({ root: sketchControls });
     }
 
-    addMessageToChat('system', `✏️ <b>Sketch Mode</b> active on ${plane.name}.`);
+    addMessageToChat('system', `✏️ <b>Sketch Mode</b> active on ${plane.name}. View Locked.`);
     updateFeatureTree();
     
     return true;
@@ -149,6 +156,12 @@ export function exitSketchMode() {
     if (sketchControls) {
         sketchControls.style.display = 'none';
     }
+    
+    // Unlock View Rotation
+    if (appState.controls) {
+        appState.controls.enableRotate = true;
+        addMessageToChat('system', 'View unlocked.');
+    }
 
     sketchState.isActive = false;
     sketchState.plane = null;
@@ -168,10 +181,15 @@ function alignCameraToSketch(group) {
     
     const newPos = center.clone().add(normal.multiplyScalar(distance));
     
-    // Animate or set? Setting for now.
+    // Update Camera
     appState.controls.target.copy(center);
     appState.camera.position.copy(newPos);
-    appState.camera.up.set(0,1,0).applyQuaternion(group.quaternion); // Adjust Up vector to match plane Y
+    
+    // Ensure UP vector is aligned with Plane's Y for intuitive drafting
+    // Plane (Group) Local Y axis in World Space:
+    const upVec = new THREE.Vector3(0, 1, 0).applyQuaternion(group.quaternion).normalize();
+    appState.camera.up.copy(upVec);
+    
     appState.camera.lookAt(center);
     appState.camera.updateProjectionMatrix();
     appState.controls.update();
