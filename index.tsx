@@ -1,0 +1,1 @@
+// This file is unused and has been removed to simplify the project structure.
