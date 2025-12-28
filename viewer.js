@@ -10,7 +10,8 @@ import { appState } from './state.js';
 import { loadAndDisplayGLB } from './loader.js';
 import { initCollisions, onDragStart, onDragMove, onDragEnd } from './collisions.js'; 
 import { initOrigin } from './origin.js';
-import { recordAction } from './recorder.js'; // Import recorder
+import { recordAction } from './recorder.js'; 
+import { pushUndoState } from './history.js'; // Import History
 
 const designCanvas = document.getElementById('design-canvas');
 const displayArea = document.getElementById('design-display-area');
@@ -137,8 +138,13 @@ export async function initThreeJS() {
     appState.transformControls.addEventListener('dragging-changed', function (event) {
         appState.controls.enabled = !event.value;
         if (event.value) {
+            // Drag START
+            // Push Undo State here so we can undo this manual transform later
+            pushUndoState();
+            
             onDragStart(); // Collision start
         } else {
+            // Drag END
             onDragEnd(); // Collision end
             
             // --- RECORD MANUAL TRANSFORM ---

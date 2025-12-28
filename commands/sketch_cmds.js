@@ -1,6 +1,7 @@
 // commands/sketch_cmds.js
 import { initSketchMode, createSketchShape, exitSketchMode } from '../sketch.js';
 import { addMessageToChat } from '../ui.js';
+import { SHAPE_CONFIG } from './primitive_cmds.js';
 
 export const sketchCommands = {
     '/sketch_on': {
@@ -28,14 +29,25 @@ export const sketchCommands = {
             const success = initSketchMode(planeName);
             
             if (success && shape) {
-                // If shape provided immediately, create it
-                // e.g., rectangle, circle
-                const shapeArgs = args.slice(2).map(n => parseFloat(n));
-                
-                // Map user friendly names to internal types
+                // Determine if args should be floats or strings based on shape config
                 let type = shape.toLowerCase();
                 if (type === 'rectangle' || type === 'rect') type = 'rect';
                 if (type === 'circle' || type === 'circ') type = 'circle';
+                
+                let configKey = `sketch_${type}`;
+                if (type === 'rect') configKey = 'sketch_rect';
+                if (type === 'circle') configKey = 'sketch_circle';
+                if (type === 'equation') configKey = 'sketch_equation';
+
+                const config = SHAPE_CONFIG[configKey];
+                const rawArgs = args.slice(2);
+                const shapeArgs = rawArgs.map((raw, idx) => {
+                     // Check if this param defaults to string
+                     if (config && config.defaults && typeof config.defaults[idx] === 'string') {
+                         return raw; // keep as string (e.g. "5*cos(t)")
+                     }
+                     return parseFloat(raw);
+                });
                 
                 createSketchShape(type, shapeArgs);
             }
@@ -52,11 +64,25 @@ export const sketchCommands = {
         execute: (argRaw) => {
             const args = argRaw.trim().split(/\s+/);
             const typeRaw = args[0].toLowerCase();
-            const shapeArgs = args.slice(1).map(n => parseFloat(n));
             
             let type = typeRaw;
             if (type === 'rectangle' || type === 'rect') type = 'rect';
             if (type === 'circle' || type === 'circ') type = 'circle';
+            
+            let configKey = `sketch_${type}`;
+            if (type === 'rect') configKey = 'sketch_rect';
+            if (type === 'circle') configKey = 'sketch_circle';
+            if (type === 'equation') configKey = 'sketch_equation';
+
+            const config = SHAPE_CONFIG[configKey];
+            const rawArgs = args.slice(1);
+            
+            const shapeArgs = rawArgs.map((raw, idx) => {
+                 if (config && config.defaults && typeof config.defaults[idx] === 'string') {
+                     return raw;
+                 }
+                 return parseFloat(raw);
+            });
 
             createSketchShape(type, shapeArgs);
         }

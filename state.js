@@ -33,6 +33,11 @@ export const appState = {
     historyStates: [],
     historyCount: 0,
 
+    // Undo/Redo System (New)
+    undoStack: [],
+    redoStack: [],
+    maxUndoSteps: 20,
+
     // Session Recording
     actionLog: [], // Stores { type, payload, timestamp }
     isReplaying: false // Flag to prevent recording while restoring

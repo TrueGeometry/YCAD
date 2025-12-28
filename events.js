@@ -13,8 +13,9 @@ import { toggleCollisions } from './collisions.js';
 import { toggleOrigin } from './origin.js'; 
 import { addMessageToChat } from './ui.js';
 import { recordAction, downloadSession, uploadAndRestoreSession } from './recorder.js'; 
-import { createSketchShape, exitSketchMode, togglePolylineTool, finishPolyline } from './sketch.js'; 
-import { executeCommand } from './commands.js'; // Import Execute
+import { createSketchShape, exitSketchMode, togglePolylineTool, finishPolyline, promptForEquation } from './sketch.js'; 
+import { executeCommand } from './commands.js'; 
+import { performUndo, performRedo } from './history.js'; // Import History
 
 // Helper to safely bind click events
 function bindClick(id, handler) {
@@ -66,10 +67,29 @@ export function bindGlobalEvents() {
     bindClick('collision-btn', () => { toggleCollisions(); recordAction('tool', 'collision'); });
     bindClick('origin-btn', () => { toggleOrigin(); recordAction('tool', 'origin'); });
 
+    // Undo / Redo UI
+    bindClick('undo-btn', performUndo);
+    bindClick('redo-btn', performRedo);
+
+    // Keyboard Shortcuts for Undo/Redo
+    document.addEventListener('keydown', (e) => {
+        // Ctrl+Z
+        if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+            e.preventDefault();
+            performUndo();
+        }
+        // Ctrl+Y
+        if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
+            e.preventDefault();
+            performRedo();
+        }
+    });
+
     // Sketch Panel Controls
     bindClick('sketch-line-btn', () => { createSketchShape('line', []); recordAction('sketch', 'line'); });
     bindClick('sketch-rect-btn', () => { createSketchShape('rect', []); recordAction('sketch', 'rect'); });
     bindClick('sketch-circle-btn', () => { createSketchShape('circle', []); recordAction('sketch', 'circle'); });
+    bindClick('sketch-eq-btn', () => { promptForEquation(); recordAction('sketch', 'equation'); }); 
     bindClick('sketch-poly-btn', () => { togglePolylineTool(); recordAction('sketch', 'polyline_tool'); });
     
     bindClick('sketch-ok-btn', () => { 

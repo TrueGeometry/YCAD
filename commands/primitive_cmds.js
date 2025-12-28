@@ -119,6 +119,26 @@ export const SHAPE_CONFIG = {
              ];
              return new THREE.BufferGeometry().setFromPoints(points);
         }
+    },
+    sketch_equation: {
+        keys: ['xEq', 'yEq', 'minT', 'maxT', 'steps'],
+        defaults: ['5 * cos(t)', '5 * sin(t)', 0, 6.28, 100],
+        factory: (p) => {
+             const points = [];
+             const steps = p.steps || 100;
+             // Safe math scope
+             const fX = new Function('t', `const {sin,cos,tan,abs,pow,sqrt,PI,E,log,exp} = Math; return ${p.xEq};`);
+             const fY = new Function('t', `const {sin,cos,tan,abs,pow,sqrt,PI,E,log,exp} = Math; return ${p.yEq};`);
+
+             const dt = (p.maxT - p.minT) / steps;
+             for(let i = 0; i <= steps; i++) {
+                 const t = p.minT + i * dt;
+                 try {
+                     points.push(new THREE.Vector3(fX(t), fY(t), 0));
+                 } catch(e) { }
+             }
+             return new THREE.BufferGeometry().setFromPoints(points);
+        }
     }
 };
 
@@ -137,10 +157,16 @@ export function updateParametricMesh(mesh) {
     // 1. Extract parameters from userData
     const params = {};
     config.keys.forEach(key => {
-        // Parse float, fallback to 1 if invalid (to prevent crash)
-        let val = parseFloat(mesh.userData[key]);
-        if (isNaN(val)) val = 1; 
-        params[key] = val;
+        const val = mesh.userData[key];
+        // Only parse as float if the default is not a string (supports equation strings)
+        const def = config.defaults[config.keys.indexOf(key)];
+        if (typeof def === 'string') {
+            params[key] = val !== undefined ? val : def;
+        } else {
+            let fVal = parseFloat(val);
+            if (isNaN(fVal)) fVal = def;
+            params[key] = fVal;
+        }
     });
 
     // 2. Pass hidden/complex data (like 2D profile for extrusions)
@@ -180,15 +206,21 @@ export const primitiveCommands = {
             }
 
             const config = SHAPE_CONFIG[type];
-            const inputParams = args.slice(1).map(n => parseFloat(n));
+            const inputArgs = args.slice(1);
             
             // Build the params object for creation
             const params = {};
             config.keys.forEach((key, index) => {
-                // Use input if available, else default
-                params[key] = (inputParams[index] !== undefined && !isNaN(inputParams[index])) 
-                              ? inputParams[index] 
-                              : config.defaults[index];
+                const def = config.defaults[index];
+                const raw = inputArgs[index];
+                
+                // Keep strings as strings if default is string
+                if (typeof def === 'string') {
+                    params[key] = raw !== undefined ? raw : def;
+                } else {
+                    const parsed = parseFloat(raw);
+                    params[key] = (raw !== undefined && !isNaN(parsed)) ? parsed : def;
+                }
             });
 
             try {
@@ -205,9 +237,8 @@ export const primitiveCommands = {
                 
                 const mesh = new THREE.Mesh(geo, material);
                 
-                // Set Name based on parameters
-                const paramStr = Object.values(params).map(v => v).join('x');
-                mesh.name = `${type.charAt(0).toUpperCase() + type.slice(1)}_${paramStr}`;
+                // Set Name based on parameters (simplification)
+                mesh.name = `${type.charAt(0).toUpperCase() + type.slice(1)}_${Date.now().toString().slice(-4)}`;
                 mesh.userData.filename = mesh.name;
                 
                 // MARK AS PARAMETRIC

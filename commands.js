@@ -13,7 +13,8 @@ import { primitiveCommands } from './commands/primitive_cmds.js'; // Import Prim
 import { sketchCommands } from './commands/sketch_cmds.js'; // Import Sketch commands
 import { csgCommands } from './commands/csg_cmds.js'; // Import CSG commands
 import { getTestCommands } from './commands/test_cmds.js';
-import { recordAction } from './recorder.js'; // Import recorder
+import { recordAction } from './recorder.js'; 
+import { pushUndoState } from './history.js'; // Import Undo logic
 
 const COMMAND_REGISTRY = {
     ...originCommands,
@@ -54,6 +55,23 @@ export function getCommandList() {
         .map(([key, val]) => ({ cmd: key, desc: val.desc }));
 }
 
+// List of commands that modify geometry and should trigger an undo snapshot
+const MODIFICATION_COMMANDS = [
+    '/move', '/translate', '/rotate', '/rot', '/scale', '/dock',
+    '/delete', '/del', '/remove', '/setprop', '/delprop',
+    '/add', '/open', '/parametric', '/parameteric', '/addshape',
+    '/pattern', '/workplane', '/workaxis', '/kbe_model',
+    '/extrude', '/subtract', '/union', '/intersect',
+    '/sketch_on', '/sketch_draw', '/annotate', '/annotate clear'
+];
+
+function isDestructive(cmd) {
+    if (MODIFICATION_COMMANDS.includes(cmd)) return true;
+    // Also check wildcard logic for simple checks
+    if (cmd.startsWith('/parametric') || cmd.startsWith('/sketch')) return true;
+    return false;
+}
+
 export async function executeCommand(input) {
     const parts = input.trim().split(/\s+/);
     const cmd = parts[0].toLowerCase();
@@ -62,7 +80,13 @@ export async function executeCommand(input) {
     if (COMMAND_REGISTRY[cmd]) {
         // Resolve alias
         let def = COMMAND_REGISTRY[cmd];
-        if (def.alias) def = COMMAND_REGISTRY[def.alias];
+        if (def.alias) {
+            // Check original name for destructive check if alias is used
+            if (isDestructive(def.alias)) pushUndoState();
+            def = COMMAND_REGISTRY[def.alias];
+        } else {
+             if (isDestructive(cmd)) pushUndoState();
+        }
         
         // Execute (support async commands)
         await def.execute(argRaw);

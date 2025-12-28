@@ -97,6 +97,30 @@ export function initSketchMode(planeName) {
     return true;
 }
 
+export function promptForEquation() {
+    if (!sketchState.isActive) return;
+
+    // Use a simple prompt for now to keep vanilla UI simple
+    const input = prompt(
+        "Enter Parametric Equations for X(t) and Y(t)\nFormat: xEq, yEq, minT, maxT\nExample: 5*cos(t), 5*sin(t), 0, 6.28", 
+        "5 * cos(t), 5 * sin(t), 0, 6.28"
+    );
+
+    if (input) {
+        const parts = input.split(',').map(s => s.trim());
+        if (parts.length >= 2) {
+            const xEq = parts[0];
+            const yEq = parts[1];
+            const minT = parseFloat(parts[2]) || 0;
+            const maxT = parseFloat(parts[3]) || 6.28;
+            
+            createSketchShape('equation', [xEq, yEq, minT, maxT, 100]);
+        } else {
+            addMessageToChat('system', '⚠️ Invalid format. Use: x(t), y(t), min, max');
+        }
+    }
+}
+
 // --- Manual Polyline Drawing ---
 
 export function togglePolylineTool() {
@@ -210,7 +234,8 @@ function updateCursorLine(currentPoint) {
     const points = [lastPoint, currentPoint];
     
     const geo = new THREE.BufferGeometry().setFromPoints(points);
-    sketchState.cursorLine = new THREE.Line(geo, new THREE.LineBasicMaterial({ color: 0x9ca3af, dashSize: 0.2, gapSize: 0.1 }));
+    // Switch to LineDashedMaterial as dashSize/gapSize are invalid on LineBasicMaterial
+    sketchState.cursorLine = new THREE.Line(geo, new THREE.LineDashedMaterial({ color: 0x9ca3af, dashSize: 0.2, gapSize: 0.1 }));
     sketchState.cursorLine.computeLineDistances(); 
     sketchState.sketchGroup.add(sketchState.cursorLine);
 }
@@ -307,7 +332,12 @@ export function createSketchShape(type, args) {
         if (initSketchMode('XY Plane')) { } else { return; }
     }
 
-    const configKey = `sketch_${type}`;
+    // Handle legacy mappings or aliases
+    let configKey = `sketch_${type}`;
+    if (type === 'rect') configKey = 'sketch_rect';
+    if (type === 'circle') configKey = 'sketch_circle';
+    if (type === 'equation') configKey = 'sketch_equation';
+
     const config = SHAPE_CONFIG[configKey];
     
     if (!config) {
@@ -317,12 +347,22 @@ export function createSketchShape(type, args) {
 
     const params = {};
     config.keys.forEach((key, index) => {
-        params[key] = (args[index] !== undefined && !isNaN(args[index])) ? args[index] : config.defaults[index];
+        // Keep string args (like equation strings)
+        const def = config.defaults[index];
+        const val = args[index];
+        if (typeof def === 'string') {
+            params[key] = val !== undefined ? val : def;
+        } else {
+            const fVal = parseFloat(val);
+            params[key] = (val !== undefined && !isNaN(fVal)) ? fVal : def;
+        }
     });
 
     const geometry = config.factory(params);
     const material = new THREE.LineBasicMaterial({ color: 0x00ff00, linewidth: 2 });
-    const lineObj = new THREE.LineLoop(geometry, material);
+    // Use LineLoop for closed shapes, Line for open
+    const isClosed = (type === 'rect' || type === 'circle' || type === 'equation'); // Equation usually open but loop works
+    const lineObj = isClosed ? new THREE.LineLoop(geometry, material) : new THREE.Line(geometry, material);
     
     lineObj.name = `Sketch${type.charAt(0).toUpperCase() + type.slice(1)}`;
     lineObj.userData.isParametric = true;
@@ -345,6 +385,16 @@ export function createSketchShape(type, args) {
         const curve = new THREE.EllipseCurve(0, 0, params.radius, params.radius, 0, 2 * Math.PI, false, 0);
         lineObj.userData.profile = curve.getPoints(64);
         lineObj.userData.closed = true;
+    } else if (type === 'equation') {
+        // Convert BufferGeometry points to Profile
+        const pos = geometry.attributes.position;
+        const points = [];
+        for(let i=0; i<pos.count; i++) {
+            points.push(new THREE.Vector2(pos.getX(i), pos.getY(i)));
+        }
+        lineObj.userData.profile = points;
+        lineObj.userData.closed = true; // Assume closed for extrusion for now, or open?
+        // Let's assume loop for safety if user wants to extrude
     }
 
     sketchState.sketchGroup.add(lineObj);
