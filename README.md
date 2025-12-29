@@ -1,4 +1,4 @@
-![Icon](android-chrome-192x192.png)
+![Icon](https://github.com/TrueGeometry/YCAD/android-chrome-192x192.png)
 
 # Design Assistant
 

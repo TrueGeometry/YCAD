@@ -96,80 +96,174 @@ export const csgCommands = {
     },
 
     '/subtract': {
-        desc: 'Boolean Subtract (@Target @Tool)',
+        desc: 'Boolean Subtract (@Target @Tool1 ...)',
         execute: async (argRaw) => {
             await performBoolean('subtract', argRaw);
         }
     },
 
     '/union': {
-        desc: 'Boolean Union (@Obj1 @Obj2)',
+        desc: 'Boolean Union (@Obj1 @Obj2 ...)',
         execute: async (argRaw) => {
             await performBoolean('union', argRaw);
         }
     },
 
+    '/union_all': {
+        desc: 'Union ALL visible meshes in scene',
+        execute: async () => {
+             // Gather all valid meshes using a custom traversal that respects visibility hierarchy
+             const allMeshes = [];
+
+             const traverseVisible = (object) => {
+                 // Stop if this object is hidden (excludes entire branch)
+                 if (!object.visible) return;
+
+                 // System filters at Group/Object level
+                 if (object.name === 'GridHelper' || object.name === 'Origin' || object.name === 'Work Features') return;
+                 if (object.type.includes('Control')) return;
+
+                 if (object.isMesh) {
+                     // Mesh-specific filters
+                     const isSystem = object.type.includes('Helper') || 
+                                      (object.userData && object.userData.type?.startsWith('Work')) ||
+                                      (object.parent && (object.parent.name === 'Origin' || object.parent.name === 'Work Features'));
+                     
+                     if (!isSystem) {
+                         allMeshes.push(object);
+                     }
+                 }
+                 
+                 // Recurse children
+                 if (object.children) {
+                     for (let i = 0; i < object.children.length; i++) {
+                         traverseVisible(object.children[i]);
+                     }
+                 }
+             };
+
+             // Start traversal from scene
+             traverseVisible(appState.scene);
+
+             if (allMeshes.length < 2) {
+                 addMessageToChat('system', `⚠️ Need at least 2 visible meshes to union (Found ${allMeshes.length}).`);
+                 return;
+             }
+             
+             addMessageToChat('system', `Found ${allMeshes.length} visible meshes. Performing global Union...`);
+             await performBoolean('union', '', allMeshes);
+        }
+    },
+
     '/intersect': {
-        desc: 'Boolean Intersect (@Obj1 @Obj2)',
+        desc: 'Boolean Intersect (@Obj1 @Obj2 ...)',
         execute: async (argRaw) => {
             await performBoolean('intersect', argRaw);
         }
     }
 };
 
-async function performBoolean(op, argRaw) {
-    // 1. Resolve Targets
-    // Updated Regex: include . for file extensions
-    const mentions = argRaw.match(/@([\w\d_.-]+)/g);
-    const objects = getTaggableObjects();
+async function performBoolean(op, argRaw, explicitObjects = null) {
+    let resolvedObjects = [];
     
-    let targetObj = null; // The object being cut (or A)
-    let toolObj = null;   // The cutter (or B)
-
-    if (mentions && mentions.length >= 2) {
-        // Case: /subtract @Cube @Cylinder
-        const match1 = objects.find(o => '@' + o.name.toLowerCase() === mentions[0].toLowerCase());
-        const match2 = objects.find(o => '@' + o.name.toLowerCase() === mentions[1].toLowerCase());
-        if (match1) targetObj = match1.object;
-        if (match2) toolObj = match2.object;
+    if (explicitObjects) {
+        resolvedObjects = explicitObjects;
     } else {
-        // Case: Select one, mention other, or simple selection assumption not safe for booleans
-        addMessageToChat('system', 'Usage: /' + op + ' @Target @Tool');
+        // 1. Resolve Targets - support multiple inputs
+        // Extract all mentions (e.g. @Cube @Sphere @Cylinder)
+        const mentions = argRaw.match(/@([\w\d_.-]+)/g);
+        
+        if (!mentions || mentions.length < 2) {
+            addMessageToChat('system', `Usage: /${op} @Obj1 @Obj2 ... (requires at least 2 objects)`);
+            return;
+        }
+
+        const allObjects = getTaggableObjects();
+        const seenUUIDs = new Set();
+        const missing = [];
+
+        // Map mentions to actual objects
+        for (const mention of mentions) {
+            const searchName = mention.substring(1).toLowerCase(); // remove @
+            // Find exact match first
+            const match = allObjects.find(o => o.name.toLowerCase() === searchName);
+            
+            if (match) {
+                if (!seenUUIDs.has(match.object.uuid)) {
+                    resolvedObjects.push(match.object);
+                    seenUUIDs.add(match.object.uuid);
+                }
+            } else {
+                missing.push(mention);
+            }
+        }
+
+        if (missing.length > 0) {
+            addMessageToChat('system', `⚠️ Could not find: ${missing.join(', ')}`);
+            return;
+        }
+    }
+
+    if (resolvedObjects.length < 2) {
+        addMessageToChat('system', '⚠️ Need at least 2 valid distinct objects for boolean operation.');
         return;
     }
 
-    if (!targetObj || !toolObj) {
-        addMessageToChat('system', '⚠️ Could not find both objects. Ensure names match exactly.');
-        return;
-    }
-
-    if (!targetObj.isMesh || !toolObj.isMesh) {
+    // Validate Meshes
+    if (resolvedObjects.some(o => !o.isMesh)) {
          addMessageToChat('system', '⚠️ Boolean operations only work on Meshes.');
          return;
     }
 
     toggleLoading(true);
-    addMessageToChat('system', `Computing ${op.toUpperCase()}... (This may take a moment)`);
+    addMessageToChat('system', `Computing ${op.toUpperCase()} of ${resolvedObjects.length} objects...`);
 
     // Allow UI to render loading state
     await new Promise(r => setTimeout(r, 50));
 
     try {
-        const csgA = CSG.fromMesh(targetObj);
-        const csgB = CSG.fromMesh(toolObj);
-        let resultCSG;
+        // Start with the first object
+        let currentCSG = CSG.fromMesh(resolvedObjects[0]);
+        
+        // Iterate through the rest
+        for (let i = 1; i < resolvedObjects.length; i++) {
+            const nextObj = resolvedObjects[i];
+            const nextCSG = CSG.fromMesh(nextObj);
 
-        if (op === 'subtract') resultCSG = csgA.subtract(csgB);
-        else if (op === 'union') resultCSG = csgA.union(csgB);
-        else if (op === 'intersect') resultCSG = csgA.intersect(csgB);
+            if (op === 'subtract') {
+                // Target - Tool1 - Tool2 ...
+                currentCSG = currentCSG.subtract(nextCSG);
+            }
+            else if (op === 'union') {
+                // A + B + C ...
+                currentCSG = currentCSG.union(nextCSG);
+            }
+            else if (op === 'intersect') {
+                // A intersect B intersect C ...
+                currentCSG = currentCSG.intersect(nextCSG);
+            }
+        }
 
-        const resultMesh = resultCSG.toMesh(targetObj.material.clone());
-        resultMesh.name = `${op}_${targetObj.name}_${toolObj.name}`;
+        const baseObj = resolvedObjects[0];
+        const resultMesh = currentCSG.toMesh(baseObj.material.clone());
+        
+        // Construct a name
+        const baseName = resolvedObjects[0].name.replace(/_/g, '');
+        let newName = `${op}_${baseName}`;
+        if (resolvedObjects.length > 2) {
+            newName += `_and_${resolvedObjects.length - 1}_others`;
+        } else {
+            const secondName = resolvedObjects[1].name.replace(/_/g, '');
+            newName += `_${secondName}`;
+        }
+        
+        // Enforce safe filename characters
+        newName = newName.replace(/\s+/g, '_');
+        resultMesh.name = newName;
         resultMesh.userData.filename = resultMesh.name;
         
-        // Remove operands
-        deleteObject(targetObj);
-        deleteObject(toolObj);
+        // Cleanup originals
+        resolvedObjects.forEach(obj => deleteObject(obj));
 
         appState.scene.add(resultMesh);
         appState.currentDisplayObject = resultMesh;

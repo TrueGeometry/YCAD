@@ -58,11 +58,11 @@ export async function runDemoSequence(executor, steps) {
     
     await new Promise(r => setTimeout(r, 1000));
 
+    // Execute Demo Steps
     for (const step of steps) {
         if (step.narration) {
             addMessageToChat('agent', `🗣️ "${step.narration}"`);
             // Run speech and command execution in parallel or sequence depending on preference.
-            // Here we start speech, then run command.
             speak(step.narration); 
         }
 
@@ -75,6 +75,19 @@ export async function runDemoSequence(executor, steps) {
         const waitTime = step.delay || 1000;
         await new Promise(r => setTimeout(r, waitTime));
     }
+
+    // --- Finalization: Union & Export ---
+    addMessageToChat('system', '⚙️ <b>Finalizing: Union All & Export STL</b>');
+    
+    // 1. Union All
+    await speak("Merging all components into a single solid.");
+    await executor('/union_all');
+    await new Promise(r => setTimeout(r, 2000));
+    
+    // 2. Export STL
+    await speak("Exporting result to STL.");
+    await executor('/export_stl');
+    await new Promise(r => setTimeout(r, 1000));
 
     addMessageToChat('system', '✅ <b>Demo Complete.</b>');
     executor('/view fit');
