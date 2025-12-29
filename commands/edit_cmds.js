@@ -26,6 +26,55 @@ export const editCommands = {
     '/del': { alias: '/delete' },
     '/remove': { alias: '/delete' },
 
+    '/rename': {
+        desc: 'Rename object (@Target NewName)',
+        execute: (argRaw) => {
+            // Check for target
+            let targetObj = null;
+            let newName = "";
+
+            // Custom parsing because resolveTarget consumes the string but we need the second part as a string, not another target.
+            const match = argRaw.match(/@([\w\d_.-]+)/);
+            
+            if (match) {
+                // Case 1: /rename @OldName NewName
+                const targetName = match[1];
+                // Remove the @Target part from the string to find the NewName
+                newName = argRaw.replace(match[0], '').trim();
+                
+                // Find the object
+                const objects = getTaggableObjects();
+                const found = objects.find(o => o.name.toLowerCase() === targetName.toLowerCase());
+                if (found) targetObj = found.object;
+            } else {
+                // Case 2: /rename NewName (Applied to selected object)
+                targetObj = appState.selectedObject || appState.currentDisplayObject;
+                newName = argRaw.trim();
+            }
+
+            if (!targetObj) {
+                addMessageToChat('system', '⚠️ No object found to rename.');
+                return;
+            }
+
+            if (!newName) {
+                addMessageToChat('system', '⚠️ Usage: /rename @Target NewName');
+                return;
+            }
+
+            // Clean new name (replace spaces with underscores)
+            newName = newName.replace(/\s+/g, '_');
+
+            const oldName = targetObj.name || targetObj.userData.filename || 'Object';
+            targetObj.name = newName;
+            if (!targetObj.userData) targetObj.userData = {};
+            targetObj.userData.filename = newName;
+
+            updateFeatureTree();
+            addMessageToChat('system', `Renamed '${oldName}' to '${newName}'`);
+        }
+    },
+
     '/move': {
         desc: 'Move object (x y z)',
         execute: (argRaw) => {
