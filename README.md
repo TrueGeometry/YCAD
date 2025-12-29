@@ -32,7 +32,7 @@ A powerful, browser-based 3D design and engineering assistant built with **Three
 *   **Session Management**: Save and restore your design session (JSON format).
 *   **Reporting**: Generate HTML-based engineering data sheets with snapshots.
 
-![Design Assistant UI](ssycad.png)
+![Design Assistant UI](https://github.com/TrueGeometry/YCAD/ssycad.png)
 
 ## Getting Started
 

@@ -5,6 +5,7 @@ import { addMessageToChat } from './ui.js';
 import { originCommands } from './commands/origin_cmds.js';
 import { patternCommands } from './commands/pattern_cmds.js';
 import { ioCommands } from './commands/io_cmds.js';
+import { exportCommands } from './commands/export_cmds.js'; // Import Export commands
 import { analyticsCommands } from './commands/analytics_cmds.js';
 import { editCommands } from './commands/edit_cmds.js';
 import { viewCommands } from './commands/view_cmds.js';
@@ -20,6 +21,7 @@ const COMMAND_REGISTRY = {
     ...originCommands,
     ...patternCommands,
     ...ioCommands,
+    ...exportCommands, // Register Export commands
     ...analyticsCommands,
     ...editCommands,
     ...viewCommands,
