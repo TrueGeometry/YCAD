@@ -8,6 +8,7 @@ import { initOrigin } from './origin.js'; // Import here
 import { sendMessage } from './chat.js';
 import { addMessageToChat } from './ui.js';
 import { initTrends } from './trends.js';
+import { initDemos } from './demos_ui.js';
 import { initChatLogic } from './chat-logic.js';
 import { bindGlobalEvents } from './events.js';
 import { executeCommand } from './commands.js'; // Import executeCommand
@@ -25,6 +26,7 @@ appState.globalTxtValue = urlParams.get('txt');
     try {
         // Initialize Components
         initTrends();
+        initDemos();
         initChatLogic();
         bindGlobalEvents();
 
