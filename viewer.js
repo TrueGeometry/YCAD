@@ -313,6 +313,9 @@ export function getTaggableObjects() {
     if (!appState.scene) return list;
     
     appState.scene.traverse((child) => {
+        // Filter out invisible objects to handle hidden demo geometry
+        if (!child.visible) return;
+
         // Exclude internal helpers and system objects
         if (child.name === 'GridHelper' || child.name === 'Origin' || child.name === 'Work Features') return;
         if (child.type.includes('Light') || child.type.includes('Camera') || child.type.includes('Control')) return;
@@ -342,17 +345,17 @@ export function getTaggableObjects() {
         }
     });
     
-    // Also explicitly add Work Features
+    // Also explicitly add Work Features, checking visibility
     const origin = appState.scene.getObjectByName("Origin");
-    if(origin) {
+    if(origin && origin.visible) {
         origin.children.forEach(c => {
-             list.push({ name: c.name.replace(/\s+/g, '_'), uuid: c.uuid, object: c });
+             if (c.visible) list.push({ name: c.name.replace(/\s+/g, '_'), uuid: c.uuid, object: c });
         });
     }
     const wf = appState.scene.getObjectByName("Work Features");
-    if(wf) {
+    if(wf && wf.visible) {
         wf.children.forEach(c => {
-             list.push({ name: c.name.replace(/\s+/g, '_'), uuid: c.uuid, object: c });
+             if (c.visible) list.push({ name: c.name.replace(/\s+/g, '_'), uuid: c.uuid, object: c });
         });
     }
 

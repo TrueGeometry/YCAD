@@ -4,6 +4,10 @@
 
 **Live Demo:** [https://truegeometry.github.io/YCAD/](https://truegeometry.github.io/YCAD/)
 
+**Main Site:** [https://www.truegeometry.com/](https://www.truegeometry.com/)
+
+**Blog:** [https://blog.truegeometry.com/](https://blog.truegeometry.com/)
+
 A powerful, browser-based 3D design and engineering assistant built with **Three.js** and **Vanilla JavaScript**. This application enables users to visualize 3D models (GLB/GLTF), interact with an AI agent (simulated interface), perform engineering analysis, and manipulate geometry using natural language commands or UI controls.
 
 ## Features
