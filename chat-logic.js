@@ -152,6 +152,8 @@ function checkForMention(text, cursorIndex) {
             context = 'parametric';
         } else if (firstWord === '/sketch_on') {
             context = 'plane';
+        } else if (firstWord === '/extrude') {
+            context = 'sketch_extrude';
         }
         
         showMentionSuggestions(query, context);
@@ -244,6 +246,21 @@ function showMentionSuggestions(query, context) {
         
         filtered.forEach(obj => {
              createMentionItem(obj.name, 'square', '#f59e0b', 'Work Plane', () => {
+                 applyMention(obj);
+             });
+             hasItems = true;
+        });
+    } else if (context === 'sketch_extrude') {
+        // Extrude Context: Show only Sketches (objects with profile data)
+        const objects = getTaggableObjects();
+        const filtered = objects.filter(o => 
+            o.name.toLowerCase().includes(query) && 
+            o.object.userData && 
+            (o.object.userData.profile || o.object.userData.shapeType?.startsWith('sketch'))
+        );
+        
+        filtered.forEach(obj => {
+             createMentionItem(obj.name, 'pen-tool', '#10b981', 'Sketch', () => {
                  applyMention(obj);
              });
              hasItems = true;

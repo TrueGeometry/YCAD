@@ -319,7 +319,10 @@ export function getTaggableObjects() {
         // Exclude internal helpers and system objects
         if (child.name === 'GridHelper' || child.name === 'Origin' || child.name === 'Work Features') return;
         if (child.type.includes('Light') || child.type.includes('Camera') || child.type.includes('Control')) return;
-        if (child.type === 'LineSegments' || child.type === 'Line') return;
+        
+        // Exclude Lines UNLESS they are Parametric Sketches (have userData.isParametric)
+        const isSketch = (child.type === 'Line' || child.type === 'LineLoop') && child.userData && child.userData.isParametric;
+        if (!isSketch && (child.type === 'LineSegments' || child.type === 'Line' || child.type === 'LineLoop')) return;
 
         // Interactive Roots
         // 1. Loaded GLB Root
@@ -329,9 +332,10 @@ export function getTaggableObjects() {
              // Continue traversal to find children if any are interactive (though roots usually suffice)
         }
         
-        // 2. Parametric Shapes (direct children meshes)
+        // 2. Parametric Shapes (direct children meshes OR sketches)
         if (child.userData && child.userData.isParametric) {
-             let rawName = child.name;
+             // Prioritize userData.filename, especially if renamed via /tag_last
+             let rawName = child.userData.filename || child.name; 
              list.push({ name: rawName.replace(/\s+/g, '_'), uuid: child.uuid, object: child });
         }
 
@@ -339,7 +343,7 @@ export function getTaggableObjects() {
         if (child.parent === appState.scene && (child.isMesh || child.isGroup)) {
              // Avoid adding duplicates if already caught by loaded_glb check
              if (child.name !== 'loaded_glb' && child.name !== 'fallback_cube' && (!child.userData || !child.userData.isParametric)) {
-                 let rawName = child.name || 'Object';
+                 let rawName = child.userData.filename || child.name || 'Object';
                  list.push({ name: rawName.replace(/\s+/g, '_'), uuid: child.uuid, object: child });
              }
         }

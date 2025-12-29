@@ -75,6 +75,36 @@ export const editCommands = {
         }
     },
 
+    '/tag_last': {
+        desc: 'Rename the most recently active object',
+        execute: (argRaw) => {
+            const newName = argRaw.trim().replace(/\s+/g, '_');
+            const target = appState.currentDisplayObject;
+            
+            if (!target) {
+                 addMessageToChat('system', '⚠️ No active object to tag/rename.');
+                 return;
+            }
+            
+            if (!newName) {
+                addMessageToChat('system', '⚠️ Usage: /tag_last NewName');
+                return;
+            }
+
+            const oldName = target.name;
+            target.name = newName;
+            if(!target.userData) target.userData = {};
+            target.userData.filename = newName;
+            
+            updateFeatureTree();
+            // Optional: Re-attach controls to ensure UI sync
+            attachTransformControls(target);
+            
+            addMessageToChat('system', `Tagged (Renamed) last object to '<b>${newName}</b>'`);
+        }
+    },
+    '/rename_last': { alias: '/tag_last' },
+
     '/move': {
         desc: 'Move object (x y z)',
         execute: (argRaw) => {

@@ -368,6 +368,7 @@ export function finishPolyline(forceClose = false) {
     }
     
     lineObj.name = `Polyline_${Date.now().toString().slice(-4)}`;
+    lineObj.userData.filename = lineObj.name; // Ensure filename is set for discovery
     lineObj.userData.isParametric = true;
     lineObj.userData.shapeType = 'polyline'; 
     // CRITICAL for Extrusion: Save 2D points (x, y)
@@ -468,6 +469,7 @@ export function createSketchShape(type, args) {
     const lineObj = isClosed ? new THREE.LineLoop(geometry, material) : new THREE.Line(geometry, material);
     
     lineObj.name = `Sketch${type.charAt(0).toUpperCase() + type.slice(1)}`;
+    lineObj.userData.filename = lineObj.name; // Ensure filename is set for discovery
     lineObj.userData.isParametric = true;
     lineObj.userData.shapeType = configKey;
     Object.assign(lineObj.userData, params);
