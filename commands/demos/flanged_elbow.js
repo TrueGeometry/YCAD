@@ -24,13 +24,13 @@ export const FLANGED_ELBOW_DEMO = [
     { cmd: '/sketch_off', delay: 500 },
 
     // 4. Sweep Outer
-    // Added align:z to prevent twisting
-    { cmd: '/sweep @OuterProfile @Path align:z', delay: 3000, narration: "Sweeping the main pipe body." },
+    // Added 'solid' so it has caps for boolean union
+    { cmd: '/sweep_uniform @OuterProfile @Path solid align:z', delay: 3000, narration: "Sweeping the main pipe body." },
     { cmd: '/tag_last PipeSolid', delay: 500 },
 
     // 5. Sweep Inner (Core)
-    // Added align:z to match outer shell
-    { cmd: '/sweep @InnerProfile @Path align:z', delay: 3000, narration: "Sweeping the inner core." },
+    // Added 'solid' so it acts as a volume to remove
+    { cmd: '/sweep_uniform @InnerProfile @Path solid align:z', delay: 3000, narration: "Sweeping the inner core." },
     { cmd: '/tag_last PipeCore', delay: 500 },
 
     // 6. Flange 1 (Start - YZ Plane)

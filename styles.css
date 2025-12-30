@@ -54,10 +54,6 @@
     display: none; /* Hidden for now, simpler visual is floating label */
 }
 
-/* Alternative: Diagonal line using CSS border on a connector div if needed. 
-   For now, the floating label relative to the dot is standard "callout" style. 
-   Let's draw a simple line from the text box corner towards the dot. */
-
 .annotation-content::after {
     content: "";
     position: absolute;
@@ -69,3 +65,22 @@
     transform-origin: right;
     transform: rotate(30deg); /* Angled down towards dot */
 }
+
+/* Origin Labels */
+.origin-label {
+    font-family: 'Segoe UI', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    color: #6b7280; /* Gray-500 */
+    pointer-events: none;
+    user-select: none;
+    text-transform: uppercase;
+    background: rgba(255,255,255,0.4);
+    padding: 2px 4px;
+    border-radius: 3px;
+    backdrop-filter: blur(2px);
+}
+
+.origin-label.axis-x { color: #ef4444; background: transparent; font-size: 14px; }
+.origin-label.axis-y { color: #10b981; background: transparent; font-size: 14px; }
+.origin-label.axis-z { color: #3b82f6; background: transparent; font-size: 14px; }

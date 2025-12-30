@@ -2,6 +2,7 @@
 // Handles default Origin geometry (Planes, Axes, Points) and Work Geometry.
 
 import * as THREE from 'three';
+import { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 import { appState } from './state.js';
 import { updateFeatureTree } from './tree.js';
 import { addMessageToChat } from './ui.js';
@@ -25,8 +26,17 @@ export function initOrigin() {
     
     const planeEdgeMat = new THREE.LineBasicMaterial({ color: 0xffaa00, transparent: true, opacity: 0.4 });
 
+    // Helper to create labels
+    const createLabel = (text, className) => {
+        const div = document.createElement('div');
+        div.className = 'origin-label';
+        if (className) div.classList.add(className);
+        div.textContent = text;
+        return new CSS2DObject(div);
+    };
+
     // Helper to create planes
-    const createPlane = (name, normalAxis) => {
+    const createPlane = (name, normalAxis, labelText) => {
         const size = 15;
         const geo = new THREE.PlaneGeometry(size, size);
         const mesh = new THREE.Mesh(geo, planeMat.clone());
@@ -36,6 +46,7 @@ export function initOrigin() {
         const line = new THREE.LineSegments(edges, planeEdgeMat);
         mesh.add(line);
 
+        // Positioning
         if (normalAxis === 'x') mesh.rotation.y = Math.PI / 2;
         if (normalAxis === 'y') mesh.rotation.x = Math.PI / 2;
         
@@ -43,11 +54,19 @@ export function initOrigin() {
         mesh.userData.type = "WorkPlane";
         mesh.userData.isFixed = true; // Prevent movement
         mesh.visible = true; // Visible by default
+
+        // Attach Label at corner
+        const label = createLabel(labelText);
+        // Position label at top-right corner of the plane (relative to plane UV)
+        // Plane goes from -size/2 to +size/2.
+        label.position.set(size/2 - 1, size/2 - 1, 0); 
+        mesh.add(label);
+
         return mesh;
     };
 
     // Helper to create axes
-    const createAxis = (name, dir, colorHex) => {
+    const createAxis = (name, dir, colorHex, labelText, labelClass) => {
         const length = 50; 
         const points = [dir.clone().multiplyScalar(-length), dir.clone().multiplyScalar(length)];
         const geo = new THREE.BufferGeometry().setFromPoints(points);
@@ -56,17 +75,28 @@ export function initOrigin() {
         line.userData.type = "WorkAxis";
         line.userData.isFixed = true; // Prevent movement
         line.visible = true; // Visible by default
+        
+        // Label at positive tip
+        const label = createLabel(labelText, labelClass);
+        label.position.copy(dir.clone().multiplyScalar(16)); // Position slightly past the plane grid (15)
+        line.add(label);
+
         return line;
     };
 
     // Add Elements matching the reference image order roughly
-    originGroup.add(createPlane("YZ Plane", 'x'));
-    originGroup.add(createPlane("XZ Plane", 'y'));
-    originGroup.add(createPlane("XY Plane", 'z'));
+    // Right Plane (YZ) -> Normal X
+    originGroup.add(createPlane("YZ Plane", 'x', "RIGHT (YZ)"));
+    
+    // Top Plane (XZ) -> Normal Y (Standard 3D Y-up)
+    originGroup.add(createPlane("XZ Plane", 'y', "TOP (XZ)"));
+    
+    // Front Plane (XY) -> Normal Z
+    originGroup.add(createPlane("XY Plane", 'z', "FRONT (XY)"));
 
-    originGroup.add(createAxis("X Axis", new THREE.Vector3(1,0,0), 0xff0000));
-    originGroup.add(createAxis("Y Axis", new THREE.Vector3(0,1,0), 0x00ff00));
-    originGroup.add(createAxis("Z Axis", new THREE.Vector3(0,0,1), 0x0000ff));
+    originGroup.add(createAxis("X Axis", new THREE.Vector3(1,0,0), 0xff0000, "X", "axis-x"));
+    originGroup.add(createAxis("Y Axis", new THREE.Vector3(0,1,0), 0x00ff00, "Y", "axis-y"));
+    originGroup.add(createAxis("Z Axis", new THREE.Vector3(0,0,1), 0x0000ff, "Z", "axis-z"));
 
     // Center Point
     const ptGeo = new THREE.SphereGeometry(0.15, 16, 16);
@@ -141,6 +171,13 @@ export function createOffsetPlane(basePlaneName, offset) {
     delete newPlane.userData.isFixed; 
     newPlane.visible = true;
     
+    // Clone children (lines) but REMOVE LABELS from clone to avoid clutter
+    for(let i=newPlane.children.length-1; i>=0; i--) {
+        if (newPlane.children[i].isCSS2DObject) {
+            newPlane.remove(newPlane.children[i]);
+        }
+    }
+
     // Apply local offset along normal
     newPlane.translateZ(parseFloat(offset));
     
@@ -162,6 +199,13 @@ export function createOffsetAxis(baseAxisName, offsetDirection, offsetDist) {
     newAxis.userData.type = 'WorkAxis';
     delete newAxis.userData.isFixed;
     newAxis.visible = true;
+    
+    // Remove labels from clone
+    for(let i=newAxis.children.length-1; i>=0; i--) {
+        if (newAxis.children[i].isCSS2DObject) {
+            newAxis.remove(newAxis.children[i]);
+        }
+    }
     
     const dist = parseFloat(offsetDist);
     const offsetVec = new THREE.Vector3();
@@ -190,6 +234,13 @@ export function createRotatedPlane(basePlaneName, axisName, angleDeg) {
     newPlane.userData.type = 'WorkPlane';
     delete newPlane.userData.isFixed;
     newPlane.visible = true;
+    
+    // Remove labels from clone
+    for(let i=newPlane.children.length-1; i>=0; i--) {
+        if (newPlane.children[i].isCSS2DObject) {
+            newPlane.remove(newPlane.children[i]);
+        }
+    }
 
     const angleRad = THREE.MathUtils.degToRad(parseFloat(angleDeg));
 
@@ -236,6 +287,13 @@ export function createRotatedAxis(baseAxisName, pivotAxisName, angleDeg) {
     newAxis.userData.type = 'WorkAxis';
     delete newAxis.userData.isFixed;
     newAxis.visible = true;
+    
+    // Remove labels
+    for(let i=newAxis.children.length-1; i>=0; i--) {
+        if (newAxis.children[i].isCSS2DObject) {
+            newAxis.remove(newAxis.children[i]);
+        }
+    }
 
     const angleRad = THREE.MathUtils.degToRad(parseFloat(angleDeg));
     
