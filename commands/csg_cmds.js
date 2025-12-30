@@ -95,6 +95,71 @@ export const csgCommands = {
         }
     },
 
+    '/sweep': {
+        desc: 'Sweep sketches (@S1 @S2 @Path [align:x|y|z] [twist:deg])',
+        execute: async (argRaw) => {
+            const args = argRaw.trim().split(/\s+/);
+            const mentions = [];
+            const sweepOptions = { align: null, twist: 0 };
+
+            args.forEach(arg => {
+                if (arg.startsWith('@')) {
+                    mentions.push(arg);
+                } else if (arg.toLowerCase().startsWith('align:')) {
+                    const axis = arg.split(':')[1].toLowerCase();
+                    if (axis === 'x') sweepOptions.align = new THREE.Vector3(1,0,0);
+                    if (axis === 'y') sweepOptions.align = new THREE.Vector3(0,1,0);
+                    if (axis === 'z') sweepOptions.align = new THREE.Vector3(0,0,1);
+                } else if (arg.toLowerCase().startsWith('twist:')) {
+                    sweepOptions.twist = parseFloat(arg.split(':')[1]) || 0;
+                }
+            });
+
+            if (mentions.length < 2) {
+                addMessageToChat('system', '⚠️ Usage: /sweep @Section1 [@Section2 ...] @GuideCurve [align:z] [twist:90]');
+                return;
+            }
+
+            const allObjects = getTaggableObjects();
+            const resolved = mentions.map(m => {
+                const name = m.substring(1).toLowerCase();
+                const found = allObjects.find(o => o.name.toLowerCase() === name);
+                return found ? found.object : null;
+            });
+
+            if (resolved.includes(null)) {
+                addMessageToChat('system', '⚠️ Could not resolve all objects.');
+                return;
+            }
+
+            // Assumption: Last object is the Guide Path
+            const pathObj = resolved[resolved.length - 1];
+            const sections = resolved.slice(0, resolved.length - 1);
+
+            toggleLoading(true);
+            addMessageToChat('system', `Generating Sweep with ${sections.length} sections...`);
+
+            // Delay for UI update
+            await new Promise(r => setTimeout(r, 50));
+
+            try {
+                const mesh = generateSweptMesh(pathObj, sections, sweepOptions);
+                if (mesh) {
+                    appState.scene.add(mesh);
+                    appState.currentDisplayObject = mesh;
+                    attachTransformControls(mesh);
+                    updateFeatureTree();
+                    addMessageToChat('system', `✅ Created Swept Blend Geometry.`);
+                }
+            } catch (e) {
+                console.error(e);
+                addMessageToChat('system', `⚠️ Sweep failed: ${e.message}`);
+            } finally {
+                toggleLoading(false);
+            }
+        }
+    },
+
     '/subtract': {
         desc: 'Boolean Subtract (@Target @Tool1 ...)',
         execute: async (argRaw) => {
@@ -278,4 +343,232 @@ async function performBoolean(op, argRaw, explicitObjects = null) {
     } finally {
         toggleLoading(false);
     }
+}
+
+// --- SWEEP HELPERS ---
+
+function generateSweptMesh(pathObj, sectionObjs, options = {}) {
+    // 1. Extract Path Curve
+    const points = getPointsFromObject(pathObj);
+    if (!points || points.length < 2) throw new Error("Invalid guide path. Needs at least 2 points.");
+    
+    // Create CatmullRom Curve
+    const curve = new THREE.CatmullRomCurve3(points);
+    // Use centripetal to avoid loops in sharp corners
+    curve.curveType = 'centripetal'; 
+    curve.tension = 0.5;
+
+    // 2. Prepare Sections (Resample to uniform count)
+    const sampleCount = 64;
+    const profiles = sectionObjs.map(obj => {
+        if (!obj.userData.profile) throw new Error(`Section ${obj.name} is not a valid sketch.`);
+        return resampleProfile(obj.userData.profile, sampleCount);
+    });
+
+    // 3. Generate Geometry
+    const steps = 100; // Segments along path
+    const vertices = [];
+    const indices = [];
+    
+    // Frenet Frame Vectors
+    const normal = new THREE.Vector3();
+    const binormal = new THREE.Vector3();
+    const tangent = new THREE.Vector3();
+    const pos = new THREE.Vector3();
+    
+    // Track previous for Parallel Transport
+    let prevBinormal = new THREE.Vector3(0, 1, 0); 
+    
+    // Loop through steps (Rings)
+    for (let i = 0; i <= steps; i++) {
+        const t = i / steps;
+        
+        // Curve Frame
+        curve.getPointAt(t, pos);
+        curve.getTangentAt(t, tangent).normalize();
+        
+        if (options.align) {
+            // FIXED ALIGNMENT MODE
+            // Force one axis to be perpendicular to tangent and align axis
+            // This prevents banking (rolling) relative to the align axis
+            const alignAxis = options.align.clone();
+            
+            // Calculate a vector perpendicular to both Tangent and AlignAxis
+            // This vector will lie in the normal plane
+            const vec = new THREE.Vector3().crossVectors(tangent, alignAxis);
+            
+            if (vec.lengthSq() < 0.0001) {
+                // Singularity: Tangent is parallel to Align Axis.
+                // Fallback to previous frame or arbitrary
+                if (i > 0) vec.copy(prevBinormal); 
+                else vec.set(1, 0, 0); // Arbitrary fallback
+            }
+            
+            binormal.copy(vec).normalize();
+            normal.crossVectors(binormal, tangent).normalize(); // Create orthogonal normal
+            
+        } else {
+            // PARALLEL TRANSPORT MODE (Default)
+            // Minimizes twist relative to path
+            let up = new THREE.Vector3(0, 1, 0);
+            if (Math.abs(tangent.dot(up)) > 0.99) up.set(1, 0, 0);
+            
+            if (i === 0) {
+                normal.crossVectors(tangent, up).normalize();
+                binormal.crossVectors(tangent, normal).normalize();
+            } else {
+                normal.crossVectors(prevBinormal, tangent).normalize();
+                binormal.crossVectors(tangent, normal).normalize();
+            }
+        }
+        
+        // APPLY TWIST (Rotation around Tangent)
+        if (options.twist) {
+            const twistRad = THREE.MathUtils.degToRad(options.twist * t);
+            normal.applyAxisAngle(tangent, twistRad);
+            binormal.applyAxisAngle(tangent, twistRad);
+        }
+
+        prevBinormal.copy(binormal); // Store for next step
+
+        // Determine Profile at t
+        let currentProfile = [];
+        if (profiles.length === 1) {
+            currentProfile = profiles[0];
+        } else {
+            // Map t (0..1) to profile index range
+            const numSegments = profiles.length - 1;
+            const segT = t * numSegments;
+            const index = Math.floor(segT);
+            const localT = segT - index;
+            
+            const pA = profiles[Math.min(index, numSegments)];
+            const pB = profiles[Math.min(index + 1, numSegments)];
+            
+            // Lerp points
+            for (let k = 0; k < sampleCount; k++) {
+                const vA = pA[k];
+                const vB = pB[k];
+                currentProfile.push(new THREE.Vector2().lerpVectors(vA, vB, localT));
+            }
+        }
+
+        // Transform 2D Profile to 3D Ring
+        // Basis: Binormal (X), Normal (Y) -> Or vice versa based on orientation
+        // We map 2D (x,y) to 3D frame
+        
+        for (let k = 0; k < sampleCount; k++) {
+            const pt2d = currentProfile[k];
+            
+            // Vertex = CurvePos + pt.x * Binormal + pt.y * Normal
+            const v = pos.clone()
+                .addScaledVector(binormal, pt2d.x)
+                .addScaledVector(normal, pt2d.y);
+            
+            vertices.push(v.x, v.y, v.z);
+        }
+    }
+
+    // Generate Indices (Quads between rings)
+    for (let i = 0; i < steps; i++) {
+        for (let k = 0; k < sampleCount; k++) {
+            const nextK = (k + 1) % sampleCount;
+            
+            const a = i * sampleCount + k;
+            const b = i * sampleCount + nextK;
+            const c = (i + 1) * sampleCount + k;
+            const d = (i + 1) * sampleCount + nextK;
+            
+            // Two triangles
+            indices.push(a, d, b);
+            indices.push(a, c, d);
+        }
+    }
+
+    // Build BufferGeometry
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+    geo.setIndex(indices);
+    geo.computeVertexNormals();
+
+    const mat = new THREE.MeshStandardMaterial({ color: 0x2563eb, metalness: 0.1, roughness: 0.5, side: THREE.DoubleSide });
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.name = "Sweep_Result";
+    mesh.userData.filename = "Sweep";
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    
+    return mesh;
+}
+
+function getPointsFromObject(obj) {
+    obj.updateMatrixWorld(true);
+    const points = [];
+    
+    if (obj.userData.profile) {
+        // It's a sketch (2D points in local space, usually z=0)
+        // Transform them to world
+        obj.userData.profile.forEach(p2 => {
+            const v = new THREE.Vector3(p2.x, p2.y, 0).applyMatrix4(obj.matrixWorld);
+            points.push(v);
+        });
+        // Check if closed loop, maybe add start point to end for path?
+        // Usually path is open, but if closed, add first point.
+        if (obj.userData.closed) {
+            points.push(points[0].clone());
+        }
+    } else if (obj.geometry) {
+        // It's a Line or Mesh
+        const posAttr = obj.geometry.attributes.position;
+        if (posAttr) {
+            for (let i = 0; i < posAttr.count; i++) {
+                const v = new THREE.Vector3().fromBufferAttribute(posAttr, i).applyMatrix4(obj.matrixWorld);
+                points.push(v);
+            }
+        }
+    }
+    return points;
+}
+
+function resampleProfile(points2D, count) {
+    // 1. Calculate total length
+    let totalLen = 0;
+    const dists = [0];
+    for (let i = 0; i < points2D.length; i++) {
+        const next = (i + 1) % points2D.length;
+        // Don't wrap if it's not closed? 
+        // Sketches are usually closed for Profiles.
+        // We assume closed loop for Sections.
+        const d = points2D[i].distanceTo(points2D[next]);
+        totalLen += d;
+        dists.push(totalLen);
+    }
+
+    const resampled = [];
+    const step = totalLen / count;
+    
+    let currentDist = 0;
+    let idx = 0;
+    
+    for (let i = 0; i < count; i++) {
+        const targetDist = i * step;
+        
+        // Find segment containing targetDist
+        while (dists[idx + 1] < targetDist && idx < points2D.length) {
+            idx++;
+        }
+        
+        // Interpolate
+        const startDist = dists[idx];
+        const endDist = dists[idx + 1];
+        const segLen = endDist - startDist;
+        const alpha = (targetDist - startDist) / (segLen || 1); // Avoid div by 0
+        
+        const p1 = points2D[idx % points2D.length];
+        const p2 = points2D[(idx + 1) % points2D.length];
+        
+        resampled.push(new THREE.Vector2().lerpVectors(p1, p2, alpha));
+    }
+    
+    return resampled;
 }
