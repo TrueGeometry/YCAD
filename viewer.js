@@ -102,6 +102,28 @@ export async function initThreeJS() {
     appState.camera.position.set(8, 7, 12);
     appState.camera.lookAt(0, 0, 0);
 
+    // --- Initialize Secondary Cameras for Split View ---
+    const frustumSize = 20;
+    // Top View Camera
+    appState.cameraTop = new THREE.OrthographicCamera(
+        -frustumSize * aspect / 2, frustumSize * aspect / 2, 
+        frustumSize / 2, -frustumSize / 2, 
+        0.1, 1000
+    );
+    appState.cameraTop.position.set(0, 50, 0);
+    appState.cameraTop.up.set(0, 0, -1);
+    appState.cameraTop.lookAt(0, 0, 0);
+
+    // Front View Camera
+    appState.cameraFront = new THREE.OrthographicCamera(
+        -frustumSize * aspect / 2, frustumSize * aspect / 2, 
+        frustumSize / 2, -frustumSize / 2, 
+        0.1, 1000
+    );
+    appState.cameraFront.position.set(0, 0, 50);
+    appState.cameraFront.up.set(0, 1, 0);
+    appState.cameraFront.lookAt(0, 0, 0);
+
     // --- Lighting Setup ---
     appState.lights.ambient = new THREE.AmbientLight(0xffffff, 0.6);
     appState.scene.add(appState.lights.ambient);
@@ -245,22 +267,80 @@ export function attachTransformControls(object) {
     }
 }
 
+export function toggleSplitView() {
+    appState.isSplitView = !appState.isSplitView;
+    const btn = document.getElementById('split-view-btn');
+    const overlay = document.getElementById('viewport-overlays');
+    
+    if (btn) btn.classList.toggle('active-mode', appState.isSplitView);
+    if (overlay) overlay.style.display = appState.isSplitView ? 'block' : 'none';
+    
+    // Update camera aspects immediately
+    onWindowResize();
+
+    if (appState.isSplitView) {
+        syncOrthoCameras();
+    } else {
+        appState.renderer.setScissorTest(false);
+    }
+}
+
+function syncOrthoCameras() {
+    if (!appState.camera || !appState.cameraTop || !appState.cameraFront) return;
+    
+    // Match zoom scale of main camera roughly, or auto-fit
+    // Here we sync zoom if possible, or just re-fit view
+    // Ortho zoom is simple multiplier.
+    
+    const zoom = appState.camera.zoom;
+    appState.cameraTop.zoom = zoom;
+    appState.cameraTop.updateProjectionMatrix();
+    appState.cameraFront.zoom = zoom;
+    appState.cameraFront.updateProjectionMatrix();
+    
+    // Look at same target as controls
+    const target = appState.controls.target;
+    appState.cameraTop.position.set(target.x, target.y + 50, target.z);
+    appState.cameraTop.lookAt(target);
+    
+    appState.cameraFront.position.set(target.x, target.y, target.z + 50);
+    appState.cameraFront.lookAt(target);
+}
+
 export function onWindowResize() {
      if (!appState.camera || !appState.renderer || !displayArea) return;
      const width = displayArea.clientWidth;
      const height = displayArea.clientHeight;
      if (width === 0 || height === 0) return;
      
-     // Correct resize for OrthographicCamera
-     const aspect = width / height;
+     // 1. Correct resize for Main Camera (Orthographic)
+     // In split view, the main camera takes up only the left half (width / 2)
+     // We must calculate aspect ratio based on this EFFECTIVE width to prevent distortion.
+     const effectiveWidth = appState.isSplitView ? width / 2 : width;
+     const mainAspect = effectiveWidth / height;
      const frustumHeight = 20; 
      
-     appState.camera.left = -frustumHeight * aspect / 2;
-     appState.camera.right = frustumHeight * aspect / 2;
+     appState.camera.left = -frustumHeight * mainAspect / 2;
+     appState.camera.right = frustumHeight * mainAspect / 2;
      appState.camera.top = frustumHeight / 2;
      appState.camera.bottom = -frustumHeight / 2;
-     
      appState.camera.updateProjectionMatrix();
+     
+     // 2. Update secondary cameras aspect (Top/Front)
+     // They occupy quadrants: (width/2) x (height/2). 
+     // Aspect = (w/2) / (h/2) = w/h
+     if (appState.cameraTop && appState.cameraFront) {
+         const fullAspect = width / height; 
+         
+         [appState.cameraTop, appState.cameraFront].forEach(cam => {
+             cam.left = -frustumHeight * fullAspect / 2;
+             cam.right = frustumHeight * fullAspect / 2;
+             cam.top = frustumHeight / 2;
+             cam.bottom = -frustumHeight / 2;
+             cam.updateProjectionMatrix();
+         });
+     }
+
      appState.renderer.setSize(width, height);
      
      if (appState.labelRenderer) {
@@ -271,10 +351,62 @@ export function onWindowResize() {
 export function animate() {
     requestAnimationFrame(animate);
     if (appState.controls) appState.controls.update();
+    
     if (appState.renderer && appState.scene && appState.camera) {
-        appState.renderer.render(appState.scene, appState.camera);
-        if (appState.labelRenderer) {
-            appState.labelRenderer.render(appState.scene, appState.camera);
+        
+        const width = displayArea.clientWidth;
+        const height = displayArea.clientHeight;
+
+        if (appState.isSplitView) {
+            appState.renderer.setScissorTest(true);
+            
+            // 1. Main View (Left Half)
+            // Scissor: x, y, w, h (y is from bottom)
+            appState.renderer.setScissor(0, 0, width / 2, height);
+            appState.renderer.setViewport(0, 0, width / 2, height);
+            appState.renderer.setClearColor(0x000000, 0); // Transparent (use CSS bg) or inherit
+            // Adjust camera aspect for left half
+            // NOTE: Ortho camera handles aspect via frustum planes in resize, not just aspect prop.
+            // Visually we just render into the rect.
+            appState.renderer.render(appState.scene, appState.camera);
+            
+            // Render Labels/Annotations only on main view?
+            if (appState.labelRenderer) {
+                // CSS2D doesn't support scissors natively. It overlays the whole div.
+                // We keep it rendering using the main camera, which matches the left view transform roughly if aspect matches.
+                // However, CSS2D overlay will float over everything.
+                appState.labelRenderer.render(appState.scene, appState.camera);
+            }
+
+            // 2. Top View (Top Right Quadrant)
+            // x = width/2, y = height/2
+            appState.renderer.setScissor(width / 2, height / 2, width / 2, height / 2);
+            appState.renderer.setViewport(width / 2, height / 2, width / 2, height / 2);
+            // Slight background tint to distinguish
+            appState.renderer.setClearColor(new THREE.Color(0xf0fdf4), 1); // Light Green tint
+            appState.renderer.render(appState.scene, appState.cameraTop);
+
+            // 3. Front View (Bottom Right Quadrant)
+            // x = width/2, y = 0
+            appState.renderer.setScissor(width / 2, 0, width / 2, height / 2);
+            appState.renderer.setViewport(width / 2, 0, width / 2, height / 2);
+            appState.renderer.setClearColor(new THREE.Color(0xeff6ff), 1); // Light Blue tint
+            appState.renderer.render(appState.scene, appState.cameraFront);
+            
+            // Reset background for next frame main render
+            // The main render relies on scene.background usually.
+            // setClearColor overrides if no background texture.
+            if (appState.scene.background) {
+                appState.renderer.setClearColor(0x000000, 0);
+            }
+
+        } else {
+            appState.renderer.setScissorTest(false);
+            appState.renderer.setViewport(0, 0, width, height);
+            appState.renderer.render(appState.scene, appState.camera);
+            if (appState.labelRenderer) {
+                appState.labelRenderer.render(appState.scene, appState.camera);
+            }
         }
     }
 }
@@ -306,6 +438,9 @@ export function setCameraView(view) {
     
     appState.camera.lookAt(0, 0, 0);
     appState.controls.update();
+    
+    // Sync split cameras if active
+    if (appState.isSplitView) syncOrthoCameras();
 }
 
 export function getTaggableObjects() {
@@ -411,4 +546,6 @@ export function fitGeometryView() {
     appState.camera.zoom = newZoom;
     appState.camera.updateProjectionMatrix();
     appState.controls.update();
+    
+    if (appState.isSplitView) syncOrthoCameras();
 }

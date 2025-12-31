@@ -84,3 +84,33 @@
 .origin-label.axis-x { color: #ef4444; background: transparent; font-size: 14px; }
 .origin-label.axis-y { color: #10b981; background: transparent; font-size: 14px; }
 .origin-label.axis-z { color: #3b82f6; background: transparent; font-size: 14px; }
+
+/* Viewport Labels (Split View) */
+.vp-label {
+    position: absolute;
+    background-color: rgba(0, 0, 0, 0.6);
+    color: #fff;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    pointer-events: none;
+    z-index: 5;
+    letter-spacing: 0.5px;
+}
+
+.vp-main {
+    bottom: 20px;
+    left: 20px;
+}
+
+.vp-top {
+    top: 20px;
+    right: 20px;
+}
+
+.vp-front {
+    bottom: 20px;
+    right: 20px;
+}

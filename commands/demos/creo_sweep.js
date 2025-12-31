@@ -61,7 +61,7 @@ export const CREO_SWEEP_DEMO = [
     // 6. Sweep
     // Transition from Rect to Circle along curve
     // Using 2 profiles -> variable sweep
-    { cmd: '/sweep_variable @StartProf @EndProf @GuidePath solid align:z', delay: 4000, narration: "Creating the variable section sweep." },
+    { cmd: '/sweep_variable @StartProf @EndProf @GuidePath solid align:z rot:0', delay: 4000, narration: "Creating the variable section sweep." },
     { cmd: '/tag_last PipeBody', delay: 500 },
 
     // 7. Top Flange

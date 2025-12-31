@@ -32,6 +32,13 @@
                 <div id="measure-label">Distance: 0.00</div>
                 <!-- Collision Warning Overlay -->
                 <div id="collision-warning">⚠️ Collision Detected!</div>
+                
+                <!-- Viewport Labels (Multi-View) -->
+                <div id="viewport-overlays" style="display: none;">
+                    <div class="vp-label vp-main">Perspective</div>
+                    <div class="vp-label vp-top">Top</div>
+                    <div class="vp-label vp-front">Front</div>
+                </div>
             </div>
             
             <!-- Pop-up: Sketch Controls (Top Ribbon style) -->
@@ -137,6 +144,7 @@
             <div id="controls-area">
                 <!-- View Group -->
                 <div class="control-group">
+                    <button id="split-view-btn" title="Toggle Split View" class="icon-only"><i data-lucide="layout-dashboard"></i></button>
                     <button id="front-view-btn" title="Front View" class="icon-only"><i data-lucide="monitor"></i></button>
                     <button id="top-view-btn" title="Top View" class="icon-only"><i data-lucide="layers"></i></button>
                     <button id="side-view-btn" title="Side View" class="icon-only"><i data-lucide="rectangle-vertical"></i></button>
@@ -211,6 +219,17 @@
                 <h1 class="text-xl font-bold text-gray-800 tracking-tight">Design Assistant</h1>
                 <h2 class="text-xs text-gray-500 font-semibold uppercase tracking-wide mb-3">Knowledge Based Engineering</h2>
                 
+                <!-- Demo Chips Section (Restored) -->
+                <div id="demo-wrapper" class="w-full mt-2 pt-2 border-t border-dashed border-gray-200">
+                    <div class="flex items-center justify-center gap-1.5 mb-2">
+                        <i data-lucide="play-circle" class="w-3 h-3 text-emerald-500"></i>
+                        <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Interactive Demos</span>
+                    </div>
+                    <div id="demo-list" class="flex flex-wrap justify-center gap-2 max-h-[80px] overflow-y-auto">
+                        <!-- Demos injected via demos_ui.js -->
+                    </div>
+                </div>
+
                 <!-- Trending Section -->
                 <div id="trending-wrapper" class="w-full hidden mt-2 pt-3 border-t border-dashed border-gray-200">
                     <div class="flex items-center justify-center gap-1.5 mb-2.5">

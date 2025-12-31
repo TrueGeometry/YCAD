@@ -25,12 +25,12 @@ export const FLANGED_ELBOW_DEMO = [
 
     // 4. Sweep Outer
     // Added 'solid' so it has caps for boolean union
-    { cmd: '/sweep_uniform @OuterProfile @Path solid align:z', delay: 3000, narration: "Sweeping the main pipe body." },
+    { cmd: '/sweep_uniform @OuterProfile @Path solid align:z rot:0', delay: 3000, narration: "Sweeping the main pipe body." },
     { cmd: '/tag_last PipeSolid', delay: 500 },
 
     // 5. Sweep Inner (Core)
     // Added 'solid' so it acts as a volume to remove
-    { cmd: '/sweep_uniform @InnerProfile @Path solid align:z', delay: 3000, narration: "Sweeping the inner core." },
+    { cmd: '/sweep_uniform @InnerProfile @Path solid align:z rot:0', delay: 3000, narration: "Sweeping the inner core." },
     { cmd: '/tag_last PipeCore', delay: 500 },
 
     // 6. Flange 1 (Start - YZ Plane)

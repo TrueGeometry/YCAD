@@ -186,6 +186,38 @@ export function generateSweptMesh(pathObj, sectionObjs, options = {}) {
         profiles.push(getProjectedProfile(obj, frame, sampleCount));
     });
 
+    // 3b. Apply Rotation Mapping (Index Shifting)
+    // This rotates the mapping of the profile without rotating the frame itself.
+    // Useful for aligning start points of closed loops.
+    if (options.rotation && options.rotation !== 0) {
+        const rot = options.rotation;
+        profiles.forEach((prof, idx) => {
+            // Keep start profile fixed, rotate subsequent profiles relative to it
+            if (idx === 0) return; 
+            
+            // Linear distribution of rotation based on profile index
+            // e.g., if 2 profiles, index 1 gets full rotation.
+            const t = idx / (sectionObjs.length - 1);
+            const angle = rot * t;
+            
+            // Calculate index shift
+            const shiftCount = Math.round((angle / 360) * sampleCount);
+            
+            if (shiftCount !== 0) {
+                const len = prof.length;
+                const normalizedShift = ((shiftCount % len) + len) % len;
+                
+                const newProf = new Array(len);
+                for(let k=0; k<len; k++) {
+                    // Shift the source index
+                    const sourceIdx = (k + normalizedShift) % len;
+                    newProf[k] = prof[sourceIdx];
+                }
+                profiles[idx] = newProf;
+            }
+        });
+    }
+
     // 4. Generate Geometry
     const vertices = [];
     const indices = [];
@@ -197,14 +229,15 @@ export function generateSweptMesh(pathObj, sectionObjs, options = {}) {
         let normal = frame.normal.clone();
         let binormal = frame.binormal.clone();
         
-        // Apply User Twist
-        let totalTwist = options.twist || 0;
+        // Apply Physical Twist (Rotates the Frame)
+        // Note: 'rotation' is now handled via index shifting above, so we only use 'twist' here.
+        const totalTwist = options.twist || 0;
+        const twistAngle = totalTwist * t;
         
-        // Apply twist
-        if (totalTwist !== 0) {
-            const twistRad = THREE.MathUtils.degToRad(totalTwist * t);
-            normal.applyAxisAngle(frame.tangent, twistRad);
-            binormal.applyAxisAngle(frame.tangent, twistRad);
+        if (twistAngle !== 0) {
+            const rad = THREE.MathUtils.degToRad(twistAngle);
+            normal.applyAxisAngle(frame.tangent, rad);
+            binormal.applyAxisAngle(frame.tangent, rad);
         }
 
         // Interpolate 2D Profile
@@ -214,12 +247,18 @@ export function generateSweptMesh(pathObj, sectionObjs, options = {}) {
         } else {
             const numSegments = profiles.length - 1;
             const segT = t * numSegments;
-            const index = Math.floor(segT);
-            const localT = segT - index;
-            const safeIndex = Math.min(index, numSegments - 1);
             
-            const pA = profiles[safeIndex];
-            const pB = profiles[Math.min(safeIndex + 1, numSegments)];
+            // Fix for t=1 (End of sweep)
+            let index = Math.floor(segT);
+            let localT = segT - index;
+            
+            if (index >= numSegments) {
+                index = numSegments - 1;
+                localT = 1.0;
+            }
+            
+            const pA = profiles[index];
+            const pB = profiles[index + 1];
             
             for (let k = 0; k < sampleCount; k++) {
                 const vA = pA[k];
@@ -255,12 +294,36 @@ export function generateSweptMesh(pathObj, sectionObjs, options = {}) {
     // Cap Ends
     if (options.capped && !curve.closed) {
         try {
+            // --- Start Cap ---
+            const startCapStartIdx = vertices.length / 3;
+            
+            for (let k = 0; k < sampleCount; k++) {
+                vertices.push(vertices[k * 3], vertices[k * 3 + 1], vertices[k * 3 + 2]);
+            }
+
             const startTris = THREE.ShapeUtils.triangulateShape(profiles[0], []);
-            startTris.forEach(t => indices.push(t[2], t[1], t[0]));
+            startTris.forEach(t => indices.push(
+                startCapStartIdx + t[2], 
+                startCapStartIdx + t[1], 
+                startCapStartIdx + t[0]
+            ));
+
+            // --- End Cap ---
+            const endCapStartIdx = vertices.length / 3;
+            const tubeEndIdx = steps * sampleCount;
+            
+            for (let k = 0; k < sampleCount; k++) {
+                const base = (tubeEndIdx + k) * 3;
+                vertices.push(vertices[base], vertices[base + 1], vertices[base + 2]);
+            }
 
             const endTris = THREE.ShapeUtils.triangulateShape(profiles[profiles.length - 1], []);
-            const offset = steps * sampleCount;
-            endTris.forEach(t => indices.push(offset + t[0], offset + t[1], offset + t[2]));
+            endTris.forEach(t => indices.push(
+                endCapStartIdx + t[0], 
+                endCapStartIdx + t[1], 
+                endCapStartIdx + t[2]
+            ));
+
         } catch (e) {
             console.warn("Failed to cap sweep geometry:", e);
         }

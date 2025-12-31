@@ -2,7 +2,7 @@
 // Handles general toolbar and UI event bindings.
 
 import { appState } from './state.js';
-import { setCameraView, setTransformMode, applyTheme, onWindowResize, fitGeometryView } from './viewer.js';
+import { setCameraView, setTransformMode, applyTheme, onWindowResize, fitGeometryView, toggleSplitView } from './viewer.js';
 import { toggleTool, toggleWireframe, toggleBoundingBox, onCanvasClick, onCanvasMove } from './tools.js';
 import { toggleSectionMode, updateSectionAxis, toggleSectionFlip, updateSectionPosition } from './section.js';
 import { togglePropertiesMode, showPhysicalProperties } from './properties.js';
@@ -30,6 +30,7 @@ export function bindGlobalEvents() {
     bindClick('load-session-btn', uploadAndRestoreSession);
 
     // View Controls
+    bindClick('split-view-btn', () => { toggleSplitView(); recordAction('view', 'split_toggle'); });
     bindClick('front-view-btn', () => { setCameraView('front'); recordAction('view', 'front'); });
     bindClick('side-view-btn', () => { setCameraView('side'); recordAction('view', 'side'); });
     bindClick('top-view-btn', () => { setCameraView('top'); recordAction('view', 'top'); });

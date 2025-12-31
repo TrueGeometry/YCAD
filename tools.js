@@ -114,8 +114,25 @@ export function resetBounds() {
 export function onCanvasClick(event) {
     if (!appState.camera || !appState.scene) return;
     const rect = designCanvas.getBoundingClientRect();
-    mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-    mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+    
+    // Calculate Mouse coords based on View Layout
+    let clickX = event.clientX - rect.left;
+    let clickY = event.clientY - rect.top;
+    
+    if (appState.isSplitView) {
+        // In split view, interaction is restricted to the left half (Perspective)
+        if (clickX > rect.width / 2) {
+            // Clicked on Ortho views, ignore for now (or handle view switch if implemented later)
+            return; 
+        }
+        // Map [0, width/2] to [-1, 1]
+        mouse.x = (clickX / (rect.width / 2)) * 2 - 1;
+        mouse.y = -(clickY / rect.height) * 2 + 1;
+    } else {
+        mouse.x = (clickX / rect.width) * 2 - 1;
+        mouse.y = -(clickY / rect.height) * 2 + 1;
+    }
+
     raycaster.setFromCamera(mouse, appState.camera);
     
     // --- SKETCH MODE DELEGATION ---
@@ -216,8 +233,18 @@ export function onCanvasMove(event) {
     // Only process if in a mode that needs movement updates (like Sketching)
     if (isSketchDrawing()) {
         const rect = designCanvas.getBoundingClientRect();
-        mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-        mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+        let clickX = event.clientX - rect.left;
+        let clickY = event.clientY - rect.top;
+
+        if (appState.isSplitView) {
+            if (clickX > rect.width / 2) return;
+            mouse.x = (clickX / (rect.width / 2)) * 2 - 1;
+            mouse.y = -(clickY / rect.height) * 2 + 1;
+        } else {
+            mouse.x = (clickX / rect.width) * 2 - 1;
+            mouse.y = -(clickY / rect.height) * 2 + 1;
+        }
+
         raycaster.setFromCamera(mouse, appState.camera);
         
         onSketchMove(event, raycaster);

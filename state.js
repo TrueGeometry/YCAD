@@ -6,7 +6,9 @@ import * as THREE from 'three';
 export const appState = {
     // Three.js Core Objects
     scene: null,
-    camera: null,
+    camera: null, // Main Perspective Camera (Left viewport)
+    cameraTop: null, // Secondary Top Camera
+    cameraFront: null, // Secondary Front Camera
     renderer: null,
     controls: null,
     transformControls: null,
@@ -20,6 +22,9 @@ export const appState = {
     sessionId: null,
     globalTxtValue: null,
     
+    // View State
+    isSplitView: false,
+
     // Model State
     currentDisplayObject: null, // Points to the most recently loaded or currently selected object
     selectedObject: null,       // Specific object selected for transformation

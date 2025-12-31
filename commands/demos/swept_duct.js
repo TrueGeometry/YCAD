@@ -37,7 +37,7 @@ export const SWEPT_DUCT_DEMO = [
     { cmd: '/move 10 0 0', delay: 1000, narration: "Positioning the outlet." },
 
     // 4. Sweep
-    { cmd: '/sweep_variable @RectProfile @CircProfile @Path solid align:z', delay: 3000, narration: "Generating the swept geometry." },
+    { cmd: '/sweep_variable @RectProfile @CircProfile @Path solid align:z rot:-45', delay: 3000, narration: "Generating the swept geometry." },
     { cmd: '/tag_last SweepResult', delay: 500 },
     
     // 5. Cleanup & Styling

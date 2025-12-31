@@ -35,7 +35,8 @@ export const VARIABLE_DUCT_DEMO = [
     { cmd: '/move 0 12 0', delay: 1000, narration: "Positioning end profile." },
 
     // 4. Sweep
-    { cmd: '/sweep_variable @StartProfile @EndProfile @Path solid', delay: 4000, narration: "Generating the variable sweep." },
+    // Added rot:90 to align the XZ profile correctly with the sweep frame
+    { cmd: '/sweep_variable @StartProfile @EndProfile @Path solid rot:90', delay: 4000, narration: "Generating the variable sweep with rotation correction." },
     { cmd: '/tag_last Duct', delay: 500 },
 
     // 5. Finish

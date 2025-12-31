@@ -13,7 +13,7 @@ import { generateSweptMesh } from './sweep_lib.js';
 async function executeSweep(argRaw, constraints = {}) {
     const args = argRaw.trim().split(/\s+/);
     const mentions = [];
-    const sweepOptions = { align: null, twist: 0, capped: false };
+    const sweepOptions = { align: null, twist: 0, rotation: 0, capped: false };
 
     args.forEach(arg => {
         const lower = arg.toLowerCase();
@@ -26,6 +26,8 @@ async function executeSweep(argRaw, constraints = {}) {
             if (axis === 'z') sweepOptions.align = new THREE.Vector3(0,0,1);
         } else if (lower.startsWith('twist:')) {
             sweepOptions.twist = parseFloat(lower.split(':')[1]) || 0;
+        } else if (lower.startsWith('rot:') || lower.startsWith('rotation:')) {
+            sweepOptions.rotation = parseFloat(lower.split(':')[1]) || 0;
         } else if (lower === 'solid') {
             sweepOptions.capped = true;
         } else if (lower === 'surface') {
@@ -184,7 +186,7 @@ export const csgCommands = {
     },
 
     '/sweep_uniform': {
-        desc: 'Sweep 1 Profile along Path (@Profile @Path)',
+        desc: 'Sweep 1 Profile along Path (@Profile @Path [twist:deg] [rot:deg])',
         execute: async (argRaw) => executeSweep(argRaw, { exact: 1 })
     },
 
