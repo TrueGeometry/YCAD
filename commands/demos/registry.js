@@ -32,6 +32,7 @@ import { KITCHEN_CLIP_DEMO } from './kitchen_clip.js';
 import { SWEPT_DUCT_DEMO } from './swept_duct.js';
 import { FLANGED_ELBOW_DEMO } from './flanged_elbow.js';
 import { CREO_SWEEP_DEMO } from './creo_sweep.js';
+import { VARIABLE_DUCT_DEMO } from './variable_duct.js';
 
 export const DEMO_REGISTRY = {
     'table': TABLE_DEMO,
@@ -89,5 +90,7 @@ export const DEMO_REGISTRY = {
     'elbow': FLANGED_ELBOW_DEMO,
     'pipe': FLANGED_ELBOW_DEMO, // alias
     'creo': CREO_SWEEP_DEMO,
-    'variable_sweep': CREO_SWEEP_DEMO // alias
+    'variable_sweep': CREO_SWEEP_DEMO, // alias
+    'variable_duct': VARIABLE_DUCT_DEMO,
+    'rounded_sweep': VARIABLE_DUCT_DEMO // alias
 };

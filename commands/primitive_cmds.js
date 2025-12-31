@@ -81,6 +81,29 @@ export const SHAPE_CONFIG = {
              return new THREE.BufferGeometry().setFromPoints(points);
         }
     },
+    sketch_rounded_rect: {
+        keys: ['width', 'height', 'radius'],
+        defaults: [5, 3, 0.5],
+        factory: (p) => {
+            const shape = new THREE.Shape();
+            const w = p.width, h = p.height, r = p.radius;
+            const x = -w/2, y = -h/2;
+            // Draw Rounded Rect Path
+            shape.moveTo(x + r, y);
+            shape.lineTo(x + w - r, y);
+            shape.quadraticCurveTo(x + w, y, x + w, y + r);
+            shape.lineTo(x + w, y + h - r);
+            shape.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+            shape.lineTo(x + r, y + h);
+            shape.quadraticCurveTo(x, y + h, x, y + h - r);
+            shape.lineTo(x, y + r);
+            shape.quadraticCurveTo(x, y, x + r, y);
+            
+            // Extract points for LineLoop
+            const points = shape.getPoints(64).map(v => new THREE.Vector3(v.x, v.y, 0));
+            return new THREE.BufferGeometry().setFromPoints(points);
+        }
+    },
     sketch_circle: {
         keys: ['radius'],
         defaults: [3],

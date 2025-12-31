@@ -33,9 +33,11 @@ export const sketchCommands = {
                 let type = shape.toLowerCase();
                 if (type === 'rectangle' || type === 'rect') type = 'rect';
                 if (type === 'circle' || type === 'circ') type = 'circle';
+                if (type === 'rounded_rect' || type === 'rounded') type = 'rounded_rect';
                 
                 let configKey = `sketch_${type}`;
                 if (type === 'rect') configKey = 'sketch_rect';
+                if (type === 'rounded_rect') configKey = 'sketch_rounded_rect';
                 if (type === 'circle') configKey = 'sketch_circle';
                 if (type === 'equation') configKey = 'sketch_equation';
 
@@ -60,7 +62,7 @@ export const sketchCommands = {
         }
     },
     '/sketch_draw': {
-        desc: 'Draw shape on active sketch (rect/circle)',
+        desc: 'Draw shape on active sketch (rect/circle/rounded_rect)',
         execute: (argRaw) => {
             const args = argRaw.trim().split(/\s+/);
             const typeRaw = args[0].toLowerCase();
@@ -68,9 +70,11 @@ export const sketchCommands = {
             let type = typeRaw;
             if (type === 'rectangle' || type === 'rect') type = 'rect';
             if (type === 'circle' || type === 'circ') type = 'circle';
+            if (type === 'rounded_rect' || type === 'rounded') type = 'rounded_rect';
             
             let configKey = `sketch_${type}`;
             if (type === 'rect') configKey = 'sketch_rect';
+            if (type === 'rounded_rect') configKey = 'sketch_rounded_rect';
             if (type === 'circle') configKey = 'sketch_circle';
             if (type === 'equation') configKey = 'sketch_equation';
 

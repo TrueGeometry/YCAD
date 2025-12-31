@@ -32,7 +32,9 @@ export const SWEPT_DUCT_DEMO = [
     { cmd: '/sketch_off', delay: 500 },
     
     // Plane is at Y=10. Origin is (0,10,0). We need (10,10,0).
-    { cmd: '/move 10 10 0', delay: 1000, narration: "Positioning the outlet." },
+    // XZ Plane local coords: X=World X, Y=World Z (or -Z).
+    // We need to move +10 in World X. So Local X = 10.
+    { cmd: '/move 10 0 0', delay: 1000, narration: "Positioning the outlet." },
 
     // 4. Sweep
     { cmd: '/sweep_variable @RectProfile @CircProfile @Path solid align:z', delay: 3000, narration: "Generating the swept geometry." },

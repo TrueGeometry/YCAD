@@ -54,7 +54,9 @@ export const CREO_SWEEP_DEMO = [
     { cmd: '/sketch_off', delay: 500 },
     
     // Plane is at X=10. Origin is (10,0,0). We need (10,12,0).
-    { cmd: '/move 10 12 0', delay: 1000, narration: "Positioning profile at the tip." },
+    // YZ Plane local coords: X=World Z, Y=World Y.
+    // We need to move UP 12 (World Y).
+    { cmd: '/move 0 12 0', delay: 1000, narration: "Positioning profile at the tip." },
 
     // 6. Sweep
     // Transition from Rect to Circle along curve

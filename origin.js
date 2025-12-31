@@ -7,6 +7,43 @@ import { appState } from './state.js';
 import { updateFeatureTree } from './tree.js';
 import { addMessageToChat } from './ui.js';
 
+// Helper to create labels
+function createLabel(text, className) {
+    const div = document.createElement('div');
+    div.className = 'origin-label';
+    if (className) div.classList.add(className);
+    div.textContent = text;
+    return new CSS2DObject(div);
+}
+
+// Helper to update/replace label on cloned object
+function updateLabelOnClone(cloneObj, newText) {
+    let labelPos = new THREE.Vector3();
+    let found = false;
+
+    // Find position of existing label (if any) from the clone
+    // Note: clone() recursively clones children, so the CSS2DObject is a new instance
+    // pointing to a potentially shared or cloned DOM element. We want to remove it.
+    for(let i=cloneObj.children.length-1; i>=0; i--) {
+        const child = cloneObj.children[i];
+        if (child.isCSS2DObject) {
+            labelPos.copy(child.position);
+            cloneObj.remove(child);
+            found = true;
+        }
+    }
+
+    // Fallback positions if no label found on parent
+    if (!found) {
+        if (cloneObj.type === 'Line') labelPos.set(16, 0, 0); // Approx for axis
+        else labelPos.set(6.5, 6.5, 0); // Approx for plane (15/2 - 1)
+    }
+
+    const label = createLabel(newText);
+    label.position.copy(labelPos);
+    cloneObj.add(label);
+}
+
 export function initOrigin() {
     let originGroup = appState.scene.getObjectByName("Origin");
     if (originGroup) return;
@@ -26,15 +63,6 @@ export function initOrigin() {
     
     const planeEdgeMat = new THREE.LineBasicMaterial({ color: 0xffaa00, transparent: true, opacity: 0.4 });
 
-    // Helper to create labels
-    const createLabel = (text, className) => {
-        const div = document.createElement('div');
-        div.className = 'origin-label';
-        if (className) div.classList.add(className);
-        div.textContent = text;
-        return new CSS2DObject(div);
-    };
-
     // Helper to create planes
     const createPlane = (name, normalAxis, labelText) => {
         const size = 15;
@@ -48,7 +76,9 @@ export function initOrigin() {
 
         // Positioning
         if (normalAxis === 'x') mesh.rotation.y = Math.PI / 2;
-        if (normalAxis === 'y') mesh.rotation.x = Math.PI / 2;
+        // FIX: Rotate -90 on X so Normal (Z) becomes Y (Up). 
+        // Previously +90 made Normal -Y (Down), causing confusion with offsets.
+        if (normalAxis === 'y') mesh.rotation.x = -Math.PI / 2;
         
         mesh.name = name;
         mesh.userData.type = "WorkPlane";
@@ -171,12 +201,7 @@ export function createOffsetPlane(basePlaneName, offset) {
     delete newPlane.userData.isFixed; 
     newPlane.visible = true;
     
-    // Clone children (lines) but REMOVE LABELS from clone to avoid clutter
-    for(let i=newPlane.children.length-1; i>=0; i--) {
-        if (newPlane.children[i].isCSS2DObject) {
-            newPlane.remove(newPlane.children[i]);
-        }
-    }
+    updateLabelOnClone(newPlane, newPlane.name);
 
     // Apply local offset along normal
     newPlane.translateZ(parseFloat(offset));
@@ -200,12 +225,7 @@ export function createOffsetAxis(baseAxisName, offsetDirection, offsetDist) {
     delete newAxis.userData.isFixed;
     newAxis.visible = true;
     
-    // Remove labels from clone
-    for(let i=newAxis.children.length-1; i>=0; i--) {
-        if (newAxis.children[i].isCSS2DObject) {
-            newAxis.remove(newAxis.children[i]);
-        }
-    }
+    updateLabelOnClone(newAxis, newAxis.name);
     
     const dist = parseFloat(offsetDist);
     const offsetVec = new THREE.Vector3();
@@ -235,12 +255,7 @@ export function createRotatedPlane(basePlaneName, axisName, angleDeg) {
     delete newPlane.userData.isFixed;
     newPlane.visible = true;
     
-    // Remove labels from clone
-    for(let i=newPlane.children.length-1; i>=0; i--) {
-        if (newPlane.children[i].isCSS2DObject) {
-            newPlane.remove(newPlane.children[i]);
-        }
-    }
+    updateLabelOnClone(newPlane, newPlane.name);
 
     const angleRad = THREE.MathUtils.degToRad(parseFloat(angleDeg));
 
@@ -288,12 +303,7 @@ export function createRotatedAxis(baseAxisName, pivotAxisName, angleDeg) {
     delete newAxis.userData.isFixed;
     newAxis.visible = true;
     
-    // Remove labels
-    for(let i=newAxis.children.length-1; i>=0; i--) {
-        if (newAxis.children[i].isCSS2DObject) {
-            newAxis.remove(newAxis.children[i]);
-        }
-    }
+    updateLabelOnClone(newAxis, newAxis.name);
 
     const angleRad = THREE.MathUtils.degToRad(parseFloat(angleDeg));
     
