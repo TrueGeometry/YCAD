@@ -1,6 +1,16 @@
 // commands/origin_cmds.js
 import { createOffsetPlane, createOffsetAxis, createRotatedPlane, createRotatedAxis, toggleOrigin } from '../origin.js';
 import { addMessageToChat } from '../ui.js';
+import { appState } from '../state.js';
+import { attachTransformControls } from '../viewer.js';
+
+// Helper to select the new feature
+function selectNewFeature(obj) {
+    if (obj) {
+        appState.currentDisplayObject = obj;
+        attachTransformControls(obj); // Will likely just detach gizmo if fixed, but updates selection state
+    }
+}
 
 export const originCommands = {
     '/origin': {
@@ -23,13 +33,10 @@ export const originCommands = {
                 // /workplane offset [Base] [Dist]
                 const base = args[1];
                 const dist = args[2] || 10;
-                const plane = createOffsetPlane(base, dist); // name cleaning handled in origin.js now more robustly?
-                // Actually, origin.js `createOffsetPlane` expects just the name.
-                // We passed "base + ' plane'" before, let's rely on findWorkFeature's fuzzy match in origin.js
-                // But `createOffsetPlane` in origin.js uses `findWorkFeature` which handles 'xy' -> 'xy plane'.
-                // So passing raw arg is better.
+                const plane = createOffsetPlane(base, dist); 
                 if (plane) {
                     addMessageToChat('system', `Created work plane: ${plane.name}`);
+                    selectNewFeature(plane);
                 } else {
                     addMessageToChat('system', `⚠️ Base plane '${base}' not found.`);
                 }
@@ -42,6 +49,7 @@ export const originCommands = {
                 const plane = createRotatedPlane(base, axis, angle);
                 if (plane) {
                      addMessageToChat('system', `Created rotated plane: ${plane.name}`);
+                     selectNewFeature(plane);
                 } else {
                      addMessageToChat('system', `⚠️ Could not create plane. Check inputs.`);
                 }
@@ -69,6 +77,7 @@ export const originCommands = {
                  const axis = createOffsetAxis(base, dir, dist);
                  if (axis) {
                      addMessageToChat('system', `Created work axis: ${axis.name}`);
+                     selectNewFeature(axis);
                  } else {
                      addMessageToChat('system', '⚠️ Base axis not found.');
                  }
@@ -82,6 +91,7 @@ export const originCommands = {
                  const axis = createRotatedAxis(base, pivot, angle);
                  if (axis) {
                       addMessageToChat('system', `Created rotated axis: ${axis.name}`);
+                      selectNewFeature(axis);
                  } else {
                       addMessageToChat('system', '⚠️ Could not create axis. Check inputs.');
                  }

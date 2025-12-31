@@ -13,7 +13,7 @@ import { generateSweptMesh } from './sweep_lib.js';
 async function executeSweep(argRaw, constraints = {}) {
     const args = argRaw.trim().split(/\s+/);
     const mentions = [];
-    const sweepOptions = { align: null, twist: 0, rotation: 0, capped: false };
+    const sweepOptions = { align: null, twist: 0, rotation: 0, capped: false, thickness: 0 };
 
     args.forEach(arg => {
         const lower = arg.toLowerCase();
@@ -28,6 +28,9 @@ async function executeSweep(argRaw, constraints = {}) {
             sweepOptions.twist = parseFloat(lower.split(':')[1]) || 0;
         } else if (lower.startsWith('rot:') || lower.startsWith('rotation:')) {
             sweepOptions.rotation = parseFloat(lower.split(':')[1]) || 0;
+        } else if (lower.startsWith('thick:') || lower.startsWith('thickness:') || lower.startsWith('wall:')) {
+            const val = parseFloat(lower.split(':')[1]);
+            if (!isNaN(val)) sweepOptions.thickness = val;
         } else if (lower === 'solid') {
             sweepOptions.capped = true;
         } else if (lower === 'surface') {
@@ -186,12 +189,12 @@ export const csgCommands = {
     },
 
     '/sweep_uniform': {
-        desc: 'Sweep 1 Profile along Path (@Profile @Path [twist:deg] [rot:deg])',
+        desc: 'Sweep 1 Profile along Path (@Profile @Path [twist:deg] [rot:deg] [thick:val])',
         execute: async (argRaw) => executeSweep(argRaw, { exact: 1 })
     },
 
     '/sweep_variable': {
-        desc: 'Sweep Start to End (@Start @End @Path)',
+        desc: 'Sweep Start to End (@Start @End @Path [thick:val])',
         execute: async (argRaw) => executeSweep(argRaw, { exact: 2 })
     },
 
@@ -201,11 +204,10 @@ export const csgCommands = {
     },
 
     '/sweep_variable_section_multiple': {
-        desc: 'Multi-section Sweep (Alias for variable section)',
+        desc: 'Multi-section Sweep (Alias)',
         execute: async (argRaw) => executeSweep(argRaw, { min: 1 })
     },
 
-    // Backward compatibility alias (Optional, mapped to variable_section which covers 1..N)
     '/sweep': {
         alias: '/sweep_variable_section'
     },
@@ -225,47 +227,30 @@ export const csgCommands = {
     },
 
     '/union_all': {
-        desc: 'Union ALL visible meshes in scene',
+        desc: 'Union ALL visible meshes',
         execute: async () => {
-             // Gather all valid meshes using a custom traversal that respects visibility hierarchy
              const allMeshes = [];
-
              const traverseVisible = (object) => {
-                 // Stop if this object is hidden (excludes entire branch)
                  if (!object.visible) return;
-
-                 // System filters at Group/Object level
                  if (object.name === 'GridHelper' || object.name === 'Origin' || object.name === 'Work Features') return;
                  if (object.type.includes('Control')) return;
-
                  if (object.isMesh) {
-                     // Mesh-specific filters
                      const isSystem = object.type.includes('Helper') || 
                                       (object.userData && object.userData.type?.startsWith('Work')) ||
                                       (object.parent && (object.parent.name === 'Origin' || object.parent.name === 'Work Features'));
-                     
-                     if (!isSystem) {
-                         allMeshes.push(object);
-                     }
+                     if (!isSystem) allMeshes.push(object);
                  }
-                 
-                 // Recurse children
                  if (object.children) {
-                     for (let i = 0; i < object.children.length; i++) {
-                         traverseVisible(object.children[i]);
-                     }
+                     for (let i = 0; i < object.children.length; i++) traverseVisible(object.children[i]);
                  }
              };
-
-             // Start traversal from scene
              traverseVisible(appState.scene);
 
              if (allMeshes.length < 2) {
-                 addMessageToChat('system', `⚠️ Need at least 2 visible meshes to union (Found ${allMeshes.length}).`);
+                 addMessageToChat('system', `⚠️ Need at least 2 visible meshes to union.`);
                  return;
              }
-             
-             addMessageToChat('system', `Found ${allMeshes.length} visible meshes. Performing global Union...`);
+             addMessageToChat('system', `Found ${allMeshes.length} meshes. Unioning...`);
              await performBoolean('union', '', allMeshes);
         }
     },

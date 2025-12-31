@@ -77,8 +77,7 @@ function computeRMFFrames(curve, steps, alignAxis) {
 
 /**
  * Projects the world points of a sketch onto the sweep frame plane (defined by B, N).
- * This ensures the sketch profile is perpendicular to the path at that point.
- * Returns array of Vector2 (u, v) where u is along Binormal, v is along Normal.
+ * Returns array of Vector2 (u, v).
  */
 function getProjectedProfile(sketchObj, frame, sampleCount) {
     if (!sketchObj.userData.profile) throw new Error("Invalid sketch");
@@ -132,15 +131,12 @@ function getProjectedProfile(sketchObj, frame, sampleCount) {
 function getPointsFromObject(obj) {
     obj.updateMatrixWorld(true);
     const points = [];
-    
     if (obj.userData.profile) {
         obj.userData.profile.forEach(p2 => {
             const v = new THREE.Vector3(p2.x, p2.y, 0).applyMatrix4(obj.matrixWorld);
             points.push(v);
         });
-        if (obj.userData.closed) {
-            points.push(points[0].clone());
-        }
+        if (obj.userData.closed) points.push(points[0].clone());
     } else if (obj.geometry) {
         const posAttr = obj.geometry.attributes.position;
         if (posAttr) {
@@ -164,11 +160,12 @@ export function generateSweptMesh(pathObj, sectionObjs, options = {}) {
     const curve = new THREE.CatmullRomCurve3(points);
     curve.curveType = 'centripetal'; 
     curve.tension = 0.5;
-    // Assume open curve unless specified
     if (pathObj.userData && pathObj.userData.closed) curve.closed = true;
 
     const sampleCount = 64;
     const steps = 100; 
+    const thickness = options.thickness || 0;
+    const isHollow = thickness > 0;
 
     // 2. Compute Stable Frames
     const frames = computeRMFFrames(curve, steps, options.align);
@@ -178,38 +175,24 @@ export function generateSweptMesh(pathObj, sectionObjs, options = {}) {
     sectionObjs.forEach((obj, idx) => {
         let t = 0;
         if (sectionObjs.length > 1) t = idx / (sectionObjs.length - 1);
-        
         const frameIndex = Math.floor(t * steps);
-        const frame = frames[frameIndex]; // Approx frame
-        
-        // Project onto RMF frame. This captures orientation relative to RMF.
+        const frame = frames[frameIndex];
         profiles.push(getProjectedProfile(obj, frame, sampleCount));
     });
 
     // 3b. Apply Rotation Mapping (Index Shifting)
-    // This rotates the mapping of the profile without rotating the frame itself.
-    // Useful for aligning start points of closed loops.
     if (options.rotation && options.rotation !== 0) {
         const rot = options.rotation;
         profiles.forEach((prof, idx) => {
-            // Keep start profile fixed, rotate subsequent profiles relative to it
             if (idx === 0) return; 
-            
-            // Linear distribution of rotation based on profile index
-            // e.g., if 2 profiles, index 1 gets full rotation.
             const t = idx / (sectionObjs.length - 1);
             const angle = rot * t;
-            
-            // Calculate index shift
             const shiftCount = Math.round((angle / 360) * sampleCount);
-            
             if (shiftCount !== 0) {
                 const len = prof.length;
                 const normalizedShift = ((shiftCount % len) + len) % len;
-                
                 const newProf = new Array(len);
                 for(let k=0; k<len; k++) {
-                    // Shift the source index
                     const sourceIdx = (k + normalizedShift) % len;
                     newProf[k] = prof[sourceIdx];
                 }
@@ -219,7 +202,8 @@ export function generateSweptMesh(pathObj, sectionObjs, options = {}) {
     }
 
     // 4. Generate Geometry
-    const vertices = [];
+    const outerVertices = [];
+    const innerVertices = [];
     const indices = [];
 
     for (let i = 0; i <= steps; i++) {
@@ -229,8 +213,7 @@ export function generateSweptMesh(pathObj, sectionObjs, options = {}) {
         let normal = frame.normal.clone();
         let binormal = frame.binormal.clone();
         
-        // Apply Physical Twist (Rotates the Frame)
-        // Note: 'rotation' is now handled via index shifting above, so we only use 'twist' here.
+        // Apply Physical Twist
         const totalTwist = options.twist || 0;
         const twistAngle = totalTwist * t;
         
@@ -247,19 +230,14 @@ export function generateSweptMesh(pathObj, sectionObjs, options = {}) {
         } else {
             const numSegments = profiles.length - 1;
             const segT = t * numSegments;
-            
-            // Fix for t=1 (End of sweep)
             let index = Math.floor(segT);
             let localT = segT - index;
-            
             if (index >= numSegments) {
                 index = numSegments - 1;
                 localT = 1.0;
             }
-            
             const pA = profiles[index];
             const pB = profiles[index + 1];
-            
             for (let k = 0; k < sampleCount; k++) {
                 const vA = pA[k];
                 const vB = pB[k];
@@ -267,17 +245,49 @@ export function generateSweptMesh(pathObj, sectionObjs, options = {}) {
             }
         }
 
-        // Transform to 3D
+        // Generate Outer Vertices
         for (let k = 0; k < sampleCount; k++) {
             const pt2d = currentProfile[k];
             const v = frame.pos.clone()
                 .addScaledVector(binormal, pt2d.x)
                 .addScaledVector(normal, pt2d.y);
-            vertices.push(v.x, v.y, v.z);
+            outerVertices.push(v.x, v.y, v.z);
+        }
+
+        // Generate Inner Vertices if Hollow
+        if (isHollow) {
+            // Calculate 2D centroid
+            let cx = 0, cy = 0;
+            currentProfile.forEach(p => { cx += p.x; cy += p.y; });
+            cx /= sampleCount;
+            cy /= sampleCount;
+            const center = new THREE.Vector2(cx, cy);
+
+            for (let k = 0; k < sampleCount; k++) {
+                const pt2d = currentProfile[k];
+                const dir = new THREE.Vector2().subVectors(pt2d, center);
+                const len = dir.length();
+                let scale = 1.0;
+                if (len > 0) scale = Math.max(0, len - thickness) / len;
+                
+                // Inner 2D point
+                const inner2d = new THREE.Vector2().addVectors(center, dir.multiplyScalar(scale));
+                
+                const v = frame.pos.clone()
+                    .addScaledVector(binormal, inner2d.x)
+                    .addScaledVector(normal, inner2d.y);
+                innerVertices.push(v.x, v.y, v.z);
+            }
         }
     }
 
+    // Combine Vertices
+    const vertices = [...outerVertices, ...innerVertices];
+    const outerOffset = 0;
+    const innerOffset = outerVertices.length / 3;
+
     // Generate Indices
+    // 1. Outer Wall
     for (let i = 0; i < steps; i++) {
         for (let k = 0; k < sampleCount; k++) {
             const nextK = (k + 1) % sampleCount;
@@ -285,45 +295,86 @@ export function generateSweptMesh(pathObj, sectionObjs, options = {}) {
             const b = i * sampleCount + nextK;
             const c = (i + 1) * sampleCount + k;
             const d = (i + 1) * sampleCount + nextK;
-            
             indices.push(a, d, b);
             indices.push(a, c, d);
         }
     }
 
-    // Cap Ends
-    if (options.capped && !curve.closed) {
-        try {
-            // --- Start Cap ---
-            const startCapStartIdx = vertices.length / 3;
-            
+    // 2. Inner Wall (Reverse Winding) & Rims
+    if (isHollow) {
+        for (let i = 0; i < steps; i++) {
             for (let k = 0; k < sampleCount; k++) {
-                vertices.push(vertices[k * 3], vertices[k * 3 + 1], vertices[k * 3 + 2]);
+                const nextK = (k + 1) % sampleCount;
+                const a = innerOffset + i * sampleCount + k;
+                const b = innerOffset + i * sampleCount + nextK;
+                const c = innerOffset + (i + 1) * sampleCount + k;
+                const d = innerOffset + (i + 1) * sampleCount + nextK;
+                // Reverse: a,b,d and a,d,c
+                indices.push(a, b, d);
+                indices.push(a, d, c);
+            }
+        }
+
+        // 3. Rims (Connecting Outer and Inner)
+        // If not closed path, we must seal the ends.
+        if (!curve.closed) {
+            // Start Rim (Step 0)
+            // Outer[0] loop to Inner[0] loop
+            // Facing "back", so winding must be consistent with looking from outside.
+            // Outer is CCW. Inner is CCW.
+            // Triangle: Outer[k], Outer[nextK], Inner[nextK] -> Normal roughly +Z? No.
+            // Start rim normal is -Tangent.
+            // Standard Rim Logic:
+            const startRowOuter = 0;
+            const startRowInner = innerOffset;
+            for (let k = 0; k < sampleCount; k++) {
+                const nextK = (k + 1) % sampleCount;
+                const o1 = startRowOuter + k;
+                const o2 = startRowOuter + nextK;
+                const i1 = startRowInner + k;
+                const i2 = startRowInner + nextK;
+                // Quad: o1, o2, i2, i1.
+                // Triangles: o1, i1, i2 and o1, i2, o2
+                indices.push(o1, i1, i2);
+                indices.push(o1, i2, o2);
             }
 
-            const startTris = THREE.ShapeUtils.triangulateShape(profiles[0], []);
-            startTris.forEach(t => indices.push(
-                startCapStartIdx + t[2], 
-                startCapStartIdx + t[1], 
-                startCapStartIdx + t[0]
-            ));
+            // End Rim (Step Last)
+            const endRowOuter = steps * sampleCount;
+            const endRowInner = innerOffset + steps * sampleCount;
+            for (let k = 0; k < sampleCount; k++) {
+                const nextK = (k + 1) % sampleCount;
+                const o1 = endRowOuter + k;
+                const o2 = endRowOuter + nextK;
+                const i1 = endRowInner + k;
+                const i2 = endRowInner + nextK;
+                // Opposite winding
+                // Quad: o1, o2, i2, i1 reversed -> o1, o2, i2 ...
+                // Triangles: o1, o2, i2 and o1, i2, i1
+                indices.push(o1, o2, i2);
+                indices.push(o1, i2, i1);
+            }
+        }
+    }
 
-            // --- End Cap ---
+    // Solid Caps (If not hollow and capped)
+    if (!isHollow && options.capped && !curve.closed) {
+        try {
+            // Start Cap
+            const startCapStartIdx = vertices.length / 3;
+            for (let k = 0; k < sampleCount; k++) vertices.push(vertices[k * 3], vertices[k * 3 + 1], vertices[k * 3 + 2]);
+            const startTris = THREE.ShapeUtils.triangulateShape(profiles[0], []);
+            startTris.forEach(t => indices.push(startCapStartIdx + t[2], startCapStartIdx + t[1], startCapStartIdx + t[0]));
+
+            // End Cap
             const endCapStartIdx = vertices.length / 3;
             const tubeEndIdx = steps * sampleCount;
-            
             for (let k = 0; k < sampleCount; k++) {
                 const base = (tubeEndIdx + k) * 3;
                 vertices.push(vertices[base], vertices[base + 1], vertices[base + 2]);
             }
-
             const endTris = THREE.ShapeUtils.triangulateShape(profiles[profiles.length - 1], []);
-            endTris.forEach(t => indices.push(
-                endCapStartIdx + t[0], 
-                endCapStartIdx + t[1], 
-                endCapStartIdx + t[2]
-            ));
-
+            endTris.forEach(t => indices.push(endCapStartIdx + t[0], endCapStartIdx + t[1], endCapStartIdx + t[2]));
         } catch (e) {
             console.warn("Failed to cap sweep geometry:", e);
         }
