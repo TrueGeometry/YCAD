@@ -3,12 +3,14 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <script type="text/javascript" async="" src="https://www.google-analytics.com/analytics.js"></script>
-    <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);} gtag('js',new Date());gtag('config','UA-66726287-5');</script>
+    
+    <!-- Analytics -->
+    <script type="module" src="analytics.js"></script>
     <script async="" src="https://www.googletagmanager.com/gtag/js?id=UA-66726287-5"></script> 
 
     <meta name="google-signin-client_id" content="989295147859-ilb8eqftb09fvnlnd8b8tgsihc0glm11.apps.googleusercontent.com">
     <script src="https://apis.google.com/js/platform.js" async defer></script>
+    
     <title>TrueGeometry - Design Intelligence</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -24,7 +26,6 @@
       ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
       ::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
       
-      /* Animation definitions */
       @keyframes fadeIn { 
         from { opacity: 0; transform: translateY(10px); } 
         to { opacity: 1; transform: translateY(0); } 
@@ -34,7 +35,6 @@
         animation: fadeIn 0.4s ease-out forwards;
       }
 
-      /* Syntax highlighting mock */
       .code-block {
         font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace;
         font-size: 0.85rem;
@@ -47,12 +47,12 @@
     <div id="home-view" class="flex flex-col min-h-screen transition-opacity duration-300">
         <!-- Header -->
         <header class="flex justify-end items-center p-4 gap-4">
-          <a href="#" class="text-sm text-gray-600 hover:underline" onclick="gtag('event', 'click', {'event_category': 'Header', 'event_label': 'CoreWebGL'})">CoreWebGL</a>
-          <a href="#" class="text-sm text-gray-600 hover:underline" onclick="gtag('event', 'click', {'event_category': 'Header', 'event_label': 'Documentation'})">Documentation</a>
-          <button class="p-2 hover:bg-gray-100 rounded-full text-gray-600" onclick="gtag('event', 'click', {'event_category': 'Header', 'event_label': 'GridMenu'})">
+          <a href="#" class="text-sm text-gray-600 hover:underline">CoreWebGL</a>
+          <a href="#" class="text-sm text-gray-600 hover:underline">Documentation</a>
+          <button class="p-2 hover:bg-gray-100 rounded-full text-gray-600">
             <i data-lucide="grid" class="w-5 h-5"></i>
           </button>
-          <button class="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-medium hover:bg-blue-700 transition-colors" onclick="gtag('event', 'click', {'event_category': 'Header', 'event_label': 'UserProfile'})">
+          <button class="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-medium hover:bg-blue-700 transition-colors">
             T
           </button>
         </header>
@@ -62,7 +62,7 @@
           <!-- Hero -->
           <div class="w-full flex flex-col items-center justify-center pt-[8vh] pb-10 px-4">
             <!-- Logo -->
-            <div id="app-logo" class="flex items-center justify-center select-none mb-8 cursor-pointer hover:opacity-90 transition-opacity" title="Reset to Home" onclick="gtag('event', 'click', {'event_category': 'Navigation', 'event_label': 'LogoReset'})">
+            <div id="app-logo" class="flex items-center justify-center select-none mb-8 cursor-pointer hover:opacity-90 transition-opacity" title="Reset to Home">
               <span class="font-bold text-[3rem] tracking-tight text-gray-800">True</span>
               <span class="font-bold text-[3rem] tracking-tight text-blue-600">Geometry</span>
             </div>
@@ -73,10 +73,10 @@
                  <i data-lucide="search" class="text-gray-400 w-5 h-5 flex-shrink-0"></i>
                  <input type="text" id="search-input" class="flex-grow mx-3 bg-transparent outline-none text-gray-700 placeholder-gray-400" placeholder="Search for 3D models (e.g., Helical Gear)...">
                  <div class="flex items-center gap-2">
-                   <button id="clear-btn" class="p-1 hover:bg-gray-100 rounded-full text-gray-500 hidden" onclick="gtag('event', 'click', {'event_category': 'Search', 'event_label': 'ClearInput'})">
+                   <button id="clear-btn" class="p-1 hover:bg-gray-100 rounded-full text-gray-500 hidden">
                      <i data-lucide="x" class="w-5 h-5"></i>
                    </button>
-                   <i data-lucide="mic" class="text-blue-500 w-5 h-5 cursor-pointer hover:text-blue-600 border-l border-gray-300 pl-2 box-content" onclick="gtag('event', 'click', {'event_category': 'Search', 'event_label': 'VoiceSearch'})"></i>
+                   <i data-lucide="mic" class="text-blue-500 w-5 h-5 cursor-pointer hover:text-blue-600 border-l border-gray-300 pl-2 box-content"></i>
                  </div>
                </div>
             </div>
@@ -118,78 +118,17 @@
             </div>
             <div class="px-8 py-3 flex flex-col md:flex-row justify-between items-center text-sm text-gray-500">
               <div class="flex gap-6 mb-2 md:mb-0">
-                <a href="#" class="hover:underline hover:text-gray-700" onclick="gtag('event', 'click', {'event_category': 'Footer', 'event_label': 'About'})">About</a>
-                <a href="#" class="hover:underline hover:text-gray-700" onclick="gtag('event', 'click', {'event_category': 'Footer', 'event_label': 'Advertising'})">Advertising</a>
-                <a href="#" class="hover:underline hover:text-gray-700" onclick="gtag('event', 'click', {'event_category': 'Footer', 'event_label': 'Business'})">Business</a>
+                <a href="#" class="hover:underline hover:text-gray-700">About</a>
+                <a href="#" class="hover:underline hover:text-gray-700">Advertising</a>
+                <a href="#" class="hover:underline hover:text-gray-700">Business</a>
               </div>
               <div class="flex gap-6">
-                <a href="#" class="hover:underline hover:text-gray-700" onclick="gtag('event', 'click', {'event_category': 'Footer', 'event_label': 'Privacy'})">Privacy</a>
-                <a href="#" class="hover:underline hover:text-gray-700" onclick="gtag('event', 'click', {'event_category': 'Footer', 'event_label': 'Terms'})">Terms</a>
+                <a href="#" class="hover:underline hover:text-gray-700">Privacy</a>
+                <a href="#" class="hover:underline hover:text-gray-700">Terms</a>
                 <span class="text-gray-400">© TrueGeometry 2024</span>
               </div>
             </div>
         </footer>
-    </div>
-
-    <!-- Design Chat Overlay (Hidden by default) -->
-    <div id="design-overlay" class="fixed inset-0 bg-white z-50 hidden flex flex-col">
-        <!-- Overlay Header -->
-        <div class="h-16 border-b border-gray-200 flex items-center justify-between px-6 bg-white shrink-0">
-            <div class="flex items-center gap-4">
-                <button id="close-overlay-btn" class="p-2 hover:bg-gray-100 rounded-full text-gray-600 transition-colors" onclick="gtag('event', 'click', {'event_category': 'Overlay', 'event_label': 'CloseOverlay'})">
-                    <i data-lucide="arrow-left" class="w-5 h-5"></i>
-                </button>
-                <div class="flex flex-col">
-                    <h2 id="overlay-title" class="text-lg font-semibold text-gray-800 leading-tight">Design Title</h2>
-                    <span id="overlay-category" class="text-xs text-gray-500">Category</span>
-                </div>
-            </div>
-            <div class="flex gap-3">
-                <button class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 text-sm font-medium transition-colors" onclick="gtag('event', 'click', {'event_category': 'Overlay', 'event_label': 'ShareDesign'})">
-                    Share
-                </button>
-                <button id="open-tool-btn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium transition-colors flex items-center gap-2" onclick="gtag('event', 'click', {'event_category': 'Overlay', 'event_label': 'OpenInEditor'})">
-                    Open in Editor <i data-lucide="external-link" class="w-4 h-4"></i>
-                </button>
-            </div>
-        </div>
-
-        <!-- Overlay Content -->
-        <div class="flex-grow flex flex-col lg:flex-row overflow-hidden">
-            <!-- Left: Visualization/Image -->
-            <div class="w-full lg:w-2/3 bg-gray-50 flex items-center justify-center p-8 relative overflow-y-auto">
-                <div class="bg-white p-2 rounded-xl shadow-lg max-w-4xl w-full">
-                    <img id="overlay-image" src="" alt="Design Preview" class="w-full h-auto rounded-lg border border-gray-100">
-                </div>
-                <!-- Chat Bubble Simulation -->
-                <div class="absolute bottom-8 left-8 right-8 flex justify-center pointer-events-none">
-                    <div class="bg-white/90 backdrop-blur-md px-6 py-3 rounded-full shadow-lg border border-gray-200 text-sm text-gray-700 pointer-events-auto flex items-center gap-3">
-                        <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                        AI Assistant ready to modify this design. Type a command...
-                    </div>
-                </div>
-            </div>
-
-            <!-- Right: Code/Details -->
-            <div class="w-full lg:w-1/3 border-l border-gray-200 bg-white flex flex-col h-full">
-                <div class="flex border-b border-gray-200">
-                    <button class="flex-1 py-3 text-sm font-medium text-blue-600 border-b-2 border-blue-600" onclick="gtag('event', 'click', {'event_category': 'Overlay', 'event_label': 'TabCode'})">HTML / Code</button>
-                    <button class="flex-1 py-3 text-sm font-medium text-gray-500 hover:text-gray-700" onclick="gtag('event', 'click', {'event_category': 'Overlay', 'event_label': 'TabProperties'})">Properties</button>
-                </div>
-                <div class="flex-grow overflow-y-auto p-0 bg-gray-50">
-                     <pre class="p-4 m-0"><code id="overlay-code" class="code-block text-gray-800 block whitespace-pre-wrap break-words"></code></pre>
-                </div>
-                <div class="p-4 border-t border-gray-200 bg-white">
-                    <div class="flex items-center gap-2 p-2 bg-gray-100 rounded-lg border border-gray-200">
-                        <i data-lucide="terminal" class="w-4 h-4 text-gray-400"></i>
-                        <input type="text" placeholder="Ask TrueGeometry to change parameters..." class="bg-transparent flex-grow text-sm outline-none text-gray-700">
-                        <button class="p-1 hover:bg-gray-200 rounded text-blue-600" onclick="gtag('event', 'click', {'event_category': 'Overlay', 'event_label': 'ChatSend'})">
-                            <i data-lucide="send" class="w-4 h-4"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
     </div>
 
     <!-- Main Logic Script -->

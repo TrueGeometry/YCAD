@@ -149,7 +149,37 @@ export const csgCommands = {
                 side: THREE.DoubleSide
             });
 
-            const mesh = new THREE.Mesh(geometry, material);
+            let mesh = new THREE.Mesh(geometry, material);
+            
+            // --- PROCESS DEFERRED SKETCH BOOLEANS ---
+            if (object.userData.sketch_ops && object.userData.sketch_ops.length > 0) {
+                try {
+                    let currentCSG = CSG.fromMesh(mesh);
+                    
+                    for (const op of object.userData.sketch_ops) {
+                        // Create temp shape from op profile
+                        const opShape = new THREE.Shape(op.profile);
+                        const opGeo = new THREE.ExtrudeGeometry(opShape, extrudeSettings);
+                        // Center is 0,0 locally, same as main mesh
+                        const opMesh = new THREE.Mesh(opGeo);
+                        
+                        const toolCSG = CSG.fromMesh(opMesh);
+                        
+                        if (op.type === 'union') currentCSG = currentCSG.union(toolCSG);
+                        else if (op.type === 'subtract') currentCSG = currentCSG.subtract(toolCSG);
+                        else if (op.type === 'intersect') currentCSG = currentCSG.intersect(toolCSG);
+                    }
+                    
+                    const resultMesh = currentCSG.toMesh(material);
+                    mesh.geometry.dispose();
+                    mesh = resultMesh;
+                    addMessageToChat('system', `Applied ${object.userData.sketch_ops.length} sketch boolean operations.`);
+                } catch(e) {
+                    console.error("Sketch Boolean Error:", e);
+                    addMessageToChat('system', '⚠️ Error applying sketch booleans during extrusion.');
+                }
+            }
+
             mesh.name = `Extrude_${name}`;
             mesh.userData.filename = mesh.name;
             
@@ -177,9 +207,6 @@ export const csgCommands = {
 
             appState.scene.add(mesh);
             
-            // Optionally hide sketch
-            // object.visible = false; 
-
             appState.currentDisplayObject = mesh;
             attachTransformControls(mesh);
             updateFeatureTree();

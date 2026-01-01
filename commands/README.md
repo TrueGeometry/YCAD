@@ -95,7 +95,7 @@ Create reference planes and axes for sketching.
 
 | Command | Description | Example |
 | :--- | :--- | :--- |
-| `/origin` | Toggle origin visibility. | `/origin` |
+| `/origin` | Toggle origin visibility (auto-scales to model). | `/origin` |
 | `/workplane offset` | Offset plane from base. | `/workplane offset XY 10` |
 | `/workplane angle` | Rotated plane around axis. | `/workplane angle XY X 45` |
 | `/workaxis offset` | Offset axis. | `/workaxis offset X Y 5` |
@@ -114,18 +114,18 @@ Load standard engineering components.
 ## 8. View & Analysis
 Visualize and measure the model.
 
-| Command | Description |
-| :--- | :--- |
-| `/view [iso/top/front]` | Set camera angle. |
-| `/view fit` | Fit camera to all objects. |
-| `/wireframe` | Toggle wireframe mode. |
-| `/bounds` | Toggle bounding boxes. |
-| `/section [x/y/z/off]` | Activate cross-section slice. |
-| `/measure [dist/angle]` | Activate measurement tool. |
-| `/props` | Calculate mass/volume properties. |
-| `/report_gen` | Generate HTML/PDF Data Sheet. |
-| `/annotate @Obj Text` | Add 3D label to object. |
-| `/tree` | Toggle Feature Tree panel. |
+| Command | Description | Example |
+| :--- | :--- | :--- |
+| `/view [orientation]` | Set view to `front`, `back`, `top`, `bottom`, `left`, `right`, or `iso`. | `/view top` |
+| `/view fit [size]` | Fit camera to all objects. Optional `size` forces specific zoom range. | `/view fit`<br>`/view fit 500` |
+| `/wireframe` | Toggle wireframe mode. | `/wireframe` |
+| `/bounds` | Toggle bounding boxes. | `/bounds` |
+| `/section [x/y/z/off]` | Activate cross-section slice. | `/section x` |
+| `/measure [dist/angle]` | Activate measurement tool. | `/measure dist` |
+| `/props` | Calculate mass/volume properties. | `/props` |
+| `/report_gen` | Generate HTML/PDF Data Sheet. | `/report_gen` |
+| `/annotate @Obj Text` | Add 3D label to object. | `/annotate @Cube Front_Face` |
+| `/tree` | Toggle Feature Tree panel. | `/tree` |
 
 ---
 

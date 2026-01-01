@@ -1,7 +1,61 @@
 // commands/sketch_cmds.js
+import * as THREE from 'three';
 import { initSketchMode, createSketchShape, exitSketchMode } from '../sketch.js';
 import { addMessageToChat } from '../ui.js';
 import { SHAPE_CONFIG } from './primitive_cmds.js';
+import { resolveTarget } from './utils.js';
+import { getTaggableObjects } from '../viewer.js';
+
+// Helper to handle deferred boolean logic
+function applySketchBoolean(op, targetRaw, toolRaw) {
+    const { object: targetObj, name: targetName } = resolveTarget(targetRaw);
+    const { object: toolObj, name: toolName } = resolveTarget(toolRaw);
+
+    if (!targetObj || !toolObj) {
+        addMessageToChat('system', `⚠️ Could not resolve one or both sketches.`);
+        return;
+    }
+
+    if (targetObj === toolObj) {
+        addMessageToChat('system', `⚠️ Cannot perform boolean on self.`);
+        return;
+    }
+
+    // Validate they are sketches with profiles
+    if (!targetObj.userData.profile || !toolObj.userData.profile) {
+        addMessageToChat('system', `⚠️ Both objects must be valid sketches.`);
+        return;
+    }
+
+    // Transform Tool Profile into Target's Local Space
+    // This allows boolean even if they are separate objects (though usually coplanar)
+    targetObj.updateMatrixWorld();
+    toolObj.updateMatrixWorld();
+    
+    const transformMat = new THREE.Matrix4()
+        .copy(targetObj.matrixWorld)
+        .invert()
+        .multiply(toolObj.matrixWorld);
+
+    const newProfile = toolObj.userData.profile.map(p => {
+        const vec = new THREE.Vector3(p.x, p.y, 0).applyMatrix4(transformMat);
+        return { x: vec.x, y: vec.y }; // Flatten back to 2D
+    });
+
+    // Store Operation
+    if (!targetObj.userData.sketch_ops) targetObj.userData.sketch_ops = [];
+    
+    targetObj.userData.sketch_ops.push({
+        type: op,
+        profile: newProfile,
+        name: toolName
+    });
+
+    // Hide the tool to reduce visual clutter (simulate consumption)
+    toolObj.visible = false;
+
+    addMessageToChat('system', `🔗 <b>Linked ${op.toUpperCase()}</b>: ${toolName} -> ${targetName}.<br><span style="font-size:0.85em; color:gray;">(Result will appear when you /extrude ${targetName})</span>`);
+}
 
 export const sketchCommands = {
     '/sketch_on': {
@@ -89,6 +143,32 @@ export const sketchCommands = {
             });
 
             createSketchShape(type, shapeArgs);
+        }
+    },
+    
+    // --- Sketch Booleans (Deferred) ---
+    '/sketch_union': {
+        desc: 'Union Sketch B into A (@A @B)',
+        execute: (argRaw) => {
+            const args = argRaw.trim().split(/\s+/);
+            if (args.length < 2) { addMessageToChat('system', 'Usage: /sketch_union @Target @Tool'); return; }
+            applySketchBoolean('union', args[0], args[1]);
+        }
+    },
+    '/sketch_subtract': {
+        desc: 'Subtract Sketch B from A (@A @B)',
+        execute: (argRaw) => {
+            const args = argRaw.trim().split(/\s+/);
+            if (args.length < 2) { addMessageToChat('system', 'Usage: /sketch_subtract @Target @Tool'); return; }
+            applySketchBoolean('subtract', args[0], args[1]);
+        }
+    },
+    '/sketch_intersect': {
+        desc: 'Intersect Sketch A and B (@A @B)',
+        execute: (argRaw) => {
+            const args = argRaw.trim().split(/\s+/);
+            if (args.length < 2) { addMessageToChat('system', 'Usage: /sketch_intersect @Target @Tool'); return; }
+            applySketchBoolean('intersect', args[0], args[1]);
         }
     }
 };

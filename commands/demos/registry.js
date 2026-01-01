@@ -36,6 +36,8 @@ import { VARIABLE_DUCT_DEMO } from './variable_duct.js';
 import { S_PIPE_DEMO } from './s_pipe.js';
 import { SENSOR_DEMO } from './sensor.js';
 import { CORNER_HOUSING_DEMO } from './corner_housing.js';
+import { MOUNTING_PLATE_DEMO } from './mounting_plate.js';
+import { MOUNTING_PLATE_SKETCH_DEMO } from './mounting_plate_sketch.js';
 
 export const DEMO_REGISTRY = {
     'table': TABLE_DEMO,
@@ -101,7 +103,11 @@ export const DEMO_REGISTRY = {
     'sensor': SENSOR_DEMO,
     'remote': SENSOR_DEMO, // alias
     'corner': CORNER_HOUSING_DEMO,
-    'housing': CORNER_HOUSING_DEMO // alias
+    'housing': CORNER_HOUSING_DEMO, // alias
+    'plate': MOUNTING_PLATE_DEMO,
+    'flange_plate': MOUNTING_PLATE_DEMO, // alias
+    'plate_sketch': MOUNTING_PLATE_SKETCH_DEMO, // New Sketch Demo
+    'sketch_plate': MOUNTING_PLATE_SKETCH_DEMO  // alias
 };
 
 export const DEMO_METADATA = {
@@ -141,5 +147,7 @@ export const DEMO_METADATA = {
     'variable_duct': { name: 'Rounded Sweep', icon: 'activity' },
     's_pipe': { name: 'S-Pipe', icon: 'activity' },
     'sensor': { name: 'IoT Sensor', icon: 'radio' },
-    'corner': { name: 'Corner Housing', icon: 'box-select' }
+    'corner': { name: 'Corner Housing', icon: 'box-select' },
+    'plate': { name: 'Mounting Plate', icon: 'settings' },
+    'plate_sketch': { name: 'Sketch Plate', icon: 'pen-tool' } // Metadata
 };

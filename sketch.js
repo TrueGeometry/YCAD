@@ -469,6 +469,13 @@ export function createSketchShape(type, args) {
     const lineObj = isClosed ? new THREE.LineLoop(geometry, material) : new THREE.Line(geometry, material);
     
     lineObj.name = `Sketch${type.charAt(0).toUpperCase() + type.slice(1)}`;
+    // Append parameters to name for clarity (matches primitive creation style)
+    const values = [];
+    config.keys.forEach(k => {
+        if (k !== 'steps' && k !== 'segments') values.push(params[k]);
+    });
+    if (values.length > 0) lineObj.name += `_${values.join('x')}`;
+
     lineObj.userData.filename = lineObj.name; // Ensure filename is set for discovery
     lineObj.userData.isParametric = true;
     lineObj.userData.shapeType = configKey;
