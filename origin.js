@@ -22,8 +22,6 @@ function updateLabelOnClone(cloneObj, newText) {
     let found = false;
 
     // Find position of existing label (if any) from the clone
-    // Note: clone() recursively clones children, so the CSS2DObject is a new instance
-    // pointing to a potentially shared or cloned DOM element. We want to remove it.
     for(let i=cloneObj.children.length-1; i>=0; i--) {
         const child = cloneObj.children[i];
         if (child.isCSS2DObject) {
@@ -76,8 +74,6 @@ export function initOrigin() {
 
         // Positioning
         if (normalAxis === 'x') mesh.rotation.y = Math.PI / 2;
-        // FIX: Rotate -90 on X so Normal (Z) becomes Y (Up). 
-        // Previously +90 made Normal -Y (Down), causing confusion with offsets.
         if (normalAxis === 'y') mesh.rotation.x = -Math.PI / 2;
         
         mesh.name = name;
@@ -87,8 +83,6 @@ export function initOrigin() {
 
         // Attach Label at corner
         const label = createLabel(labelText);
-        // Position label at top-right corner of the plane (relative to plane UV)
-        // Plane goes from -size/2 to +size/2.
         label.position.set(size/2 - 1, size/2 - 1, 0); 
         mesh.add(label);
 
@@ -115,13 +109,8 @@ export function initOrigin() {
     };
 
     // Add Elements matching the reference image order roughly
-    // Right Plane (YZ) -> Normal X
     originGroup.add(createPlane("YZ Plane", 'x', "RIGHT (YZ)"));
-    
-    // Top Plane (XZ) -> Normal Y (Standard 3D Y-up)
     originGroup.add(createPlane("XZ Plane", 'y', "TOP (XZ)"));
-    
-    // Front Plane (XY) -> Normal Z
     originGroup.add(createPlane("XY Plane", 'z', "FRONT (XY)"));
 
     originGroup.add(createAxis("X Axis", new THREE.Vector3(1,0,0), 0xff0000, "X", "axis-x"));
@@ -150,6 +139,33 @@ export function toggleOrigin() {
         
         addMessageToChat('system', `Origin visibility: ${originGroup.visible ? 'ON' : 'OFF'}`);
     }
+}
+
+// Rescale Origin geometry to match the scene size
+export function updateOriginScale(targetRadius) {
+    if (!targetRadius || targetRadius <= 0) return;
+    
+    // Designed around radius ~12
+    const baseRadius = 12.0; 
+    let scale = targetRadius / baseRadius;
+    
+    // Clamp to avoid extreme min/max
+    if (scale < 0.01) scale = 0.01;
+    if (scale > 10000) scale = 10000;
+
+    const updateGroup = (name) => {
+        const group = appState.scene.getObjectByName(name);
+        if (group) {
+            group.children.forEach(child => {
+                if (child.userData.type && (child.userData.type.startsWith('Work'))) {
+                    child.scale.set(scale, scale, scale);
+                }
+            });
+        }
+    };
+
+    updateGroup("Origin");
+    updateGroup("Work Features");
 }
 
 // Helper to find features loosely
@@ -204,7 +220,15 @@ export function createOffsetPlane(basePlaneName, offset) {
     updateLabelOnClone(newPlane, newPlane.name);
 
     // Apply local offset along normal
-    newPlane.translateZ(parseFloat(offset));
+    // Note: Translate Z applies to the geometry's local Z. 
+    // If the base plane is scaled, the translation distance is also scaled!
+    // We must compensate if we want 'offset' units in World Space.
+    // However, THREE.js translateZ translates by distance * localCoordinateSystem.
+    // If we scaled the object by S, the local unit vector is length 1*S in world.
+    // So translateZ(offset) moves it by offset * S units world. 
+    // We want world displacement 'offset'. So we must translate by offset / S.
+    const s = newPlane.scale.z; 
+    newPlane.translateZ(parseFloat(offset) / s);
     
     addToWorkFeatures(newPlane);
     return newPlane;
@@ -235,6 +259,8 @@ export function createOffsetAxis(baseAxisName, offsetDirection, offsetDist) {
     else if (dir === 'y') offsetVec.set(0, dist, 0);
     else if (dir === 'z') offsetVec.set(0, 0, dist);
 
+    // Position is world, so simply add. Position is not affected by scale unless parented.
+    // Origin axes are usually direct children of Origin Group. Origin Group usually has scale 1.
     newAxis.position.add(offsetVec);
     newAxis.updateMatrixWorld();
 

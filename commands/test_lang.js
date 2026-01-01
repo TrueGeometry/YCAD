@@ -16,6 +16,7 @@ export const TRANSLATIONS = {
         // Booleans
         bool_setup: "Creating primitive shapes for boolean operations.",
         bool_sub: "Performing boolean subtraction: Cube minus Cylinder.",
+        bool_int: "Testing boolean intersection between a Box and a Sphere.",
         
         // Sketch & Extrude
         sketch_start: "Entering Sketch Mode on XY Plane.",
@@ -25,10 +26,13 @@ export const TRANSLATIONS = {
         sketch_end: "Exiting Sketch Mode.",
         extrude: "Extruding the sketch into a 3D solid.",
         param_change: "Modifying the extrusion height dynamically.",
+        fillet_op: "Applying fillet to round the sharp edges.",
+        rename_op: "Renaming the object for better organization.",
         
         // Docking & KBE
         dock_setup: "Creating shapes to test docking alignment.",
         dock_action: "Docking the Cube adjacent to the Cylinder.",
+        prim_test: "Generating additional primitives: Torus and Cone.",
         kbe_load: "Loading a standard engineering component from the catalog.",
 
         load_model: "Loading 3D model from URL.",
@@ -70,6 +74,7 @@ export const TRANSLATIONS = {
         history_redo: "Redoing the operation.",
 
         save_session: "Saving the session state to a local file.",
+        export_op: "Exporting the final scene to GLB format.",
         final_iso: "Switching to isometric view.",
         complete: "Test suite completed successfully."
     },
@@ -86,6 +91,7 @@ export const TRANSLATIONS = {
         rot_axis: "एक रोटेटेड वर्क एक्सिस बनाया जा रहा है।",
         bool_setup: "बूलियन ऑपरेशंस के लिए आकृतियाँ बनाई जा रही हैं।",
         bool_sub: "बूलियन घटाव (सबट्रैक्शन) किया जा रहा है।",
+        bool_int: "बॉक्स और गोले के बीच बूलियन प्रतिच्छेदन (Intersection) का परीक्षण।",
         sketch_start: "XY प्लेन पर स्केच मोड शुरू किया जा रहा है।",
         sketch_rect: "एक 2D आयत बनाया जा रहा है।",
         sketch_circ: "एक 2D वृत्त बनाया जा रहा है।",
@@ -93,8 +99,11 @@ export const TRANSLATIONS = {
         sketch_end: "स्केच मोड बंद किया जा रहा है।",
         extrude: "स्केच को 3D में एक्सट्रूड किया जा रहा है।",
         param_change: "एक्सट्रूज़न की ऊंचाई को गतिशील रूप से संशोधित किया जा रहा है।",
+        fillet_op: "किनारों को गोल करने के लिए फिलेट लागू किया जा रहा है।",
+        rename_op: "बेहतर संगठन के लिए ऑब्जेक्ट का नाम बदला जा रहा है।",
         dock_setup: "डॉकिंग संरेखण का परीक्षण करने के लिए आकृतियाँ बनाई जा रही हैं।",
         dock_action: "घन को सिलेंडर के बगल में डॉक किया जा रहा है।",
+        prim_test: "अतिरिक्त प्राइमेटिव्स बनाए जा रहे हैं: टोरस और कोन।",
         kbe_load: "कैटलॉग से एक मानक इंजीनियरिंग घटक लोड किया जा रहा है।",
         load_model: "URL से 3D मॉडल लोड किया जा रहा है।",
         focus_model: "नए मॉडल पर फोकस किया जा रहा है।",
@@ -129,6 +138,7 @@ export const TRANSLATIONS = {
         history_undo: "पिछली कार्रवाई को पूर्ववत (Undo) किया जा रहा है।",
         history_redo: "कार्रवाई को फिर से (Redo) किया जा रहा है।",
         save_session: "सत्र स्टेट को सेव किया जा रहा है।",
+        export_op: "अंतिम दृश्य को GLB फॉर्मेट में निर्यात किया जा रहा है।",
         final_iso: "आइसोमेट्रिक दृश्य में स्विच किया जा रहा है।",
         complete: "टेस्ट सूट सफलतापूर्वक पूरा हुआ।"
     },
@@ -145,6 +155,7 @@ export const TRANSLATIONS = {
         rot_axis: "Creando un eje de trabajo rotado.",
         bool_setup: "Creando formas primitivas para operaciones booleanas.",
         bool_sub: "Realizando sustracción booleana.",
+        bool_int: "Probando intersección booleana entre una caja y una esfera.",
         sketch_start: "Entrando en modo de croquis en el plano XY.",
         sketch_rect: "Dibujando un perfil rectangular.",
         sketch_circ: "Dibujando un perfil circular.",
@@ -152,8 +163,11 @@ export const TRANSLATIONS = {
         sketch_end: "Saliendo del modo de croquis.",
         extrude: "Extruyendo el croquis a 3D.",
         param_change: "Modificando dinámicamente la altura de extrusión.",
+        fillet_op: "Aplicando redondeo (fillet) a los bordes.",
+        rename_op: "Renombrando el objeto para mejor organización.",
         dock_setup: "Creando formas para probar la alineación de acoplamiento.",
         dock_action: "Acoplando el cubo adyacente al cilindro.",
+        prim_test: "Generando primitivas adicionales: Toro y Cono.",
         kbe_load: "Cargando un componente de ingeniería estándar del catálogo.",
         load_model: "Cargando modelo 3D desde URL.",
         focus_model: "Enfocando en el nuevo modelo.",
@@ -188,6 +202,7 @@ export const TRANSLATIONS = {
         history_undo: "Deshaciendo la última acción.",
         history_redo: "Rehaciendo la acción.",
         save_session: "Guardando el estado de la sesión.",
+        export_op: "Exportando la escena final a formato GLB.",
         final_iso: "Cambiando a vista isométrica.",
         complete: "Suite de pruebas completada con éxito."
     },
@@ -204,6 +219,7 @@ export const TRANSLATIONS = {
         rot_axis: "创建旋转工作轴。",
         bool_setup: "创建布尔运算的图元。",
         bool_sub: "执行布尔减法。",
+        bool_int: "测试长方体和球体之间的布尔交集。",
         sketch_start: "进入 XY 平面草图模式。",
         sketch_rect: "绘制 2D 矩形轮廓。",
         sketch_circ: "绘制 2D 圆形轮廓。",
@@ -211,8 +227,11 @@ export const TRANSLATIONS = {
         sketch_end: "退出草图模式。",
         extrude: "将草图拉伸为 3D 实体。",
         param_change: "动态修改拉伸高度。",
+        fillet_op: "应用倒角以使边缘变圆。",
+        rename_op: "重命名对象以便更好地组织。",
         dock_setup: "创建形状以测试对齐。",
         dock_action: "将立方体停靠在圆柱体旁边。",
+        prim_test: "生成其他图元：圆环和圆锥。",
         kbe_load: "从目录加载标准工程组件。",
         load_model: "正在从 URL 加载 3D 模型。",
         focus_model: "聚焦于新模型。",
@@ -247,6 +266,7 @@ export const TRANSLATIONS = {
         history_undo: "撤消上一次操作。",
         history_redo: "重做该操作。",
         save_session: "保存会话状态。",
+        export_op: "将最终场景导出为 GLB 格式。",
         final_iso: "切换回等轴测视图。",
         complete: "测试套件成功完成。"
     },
@@ -263,6 +283,7 @@ export const TRANSLATIONS = {
         rot_axis: "Создание повернутой рабочей оси.",
         bool_setup: "Создание примитивов для логических операций.",
         bool_sub: "Выполнение логического вычитания.",
+        bool_int: "Тестирование логического пересечения куба и сферы.",
         sketch_start: "Вход в режим эскиза на плоскости XY.",
         sketch_rect: "Рисование 2D прямоугольника.",
         sketch_circ: "Рисование 2D окружности.",
@@ -270,8 +291,11 @@ export const TRANSLATIONS = {
         sketch_end: "Выход из режима эскиза.",
         extrude: "Выдавливание эскиза в 3D.",
         param_change: "Динамическое изменение высоты выдавливания.",
+        fillet_op: "Применение скругления к краям.",
+        rename_op: "Переименование объекта для лучшей организации.",
         dock_setup: "Создание форм для тестирования стыковки.",
         dock_action: "Стыковка куба рядом с цилиндром.",
+        prim_test: "Создание дополнительных примитивов: тор и конус.",
         kbe_load: "Загрузка стандартного инженерного компонента из каталога.",
         load_model: "Загрузка 3D модели по URL.",
         focus_model: "Фокусировка на новой модели.",
@@ -306,6 +330,7 @@ export const TRANSLATIONS = {
         history_undo: "Отмена последнего действия.",
         history_redo: "Повтор действия.",
         save_session: "Сохранение сеанса.",
+        export_op: "Экспорт финальной сцены в формат GLB.",
         final_iso: "Переключение в изометрический вид.",
         complete: "Набор тестов успешно выполнен."
     }

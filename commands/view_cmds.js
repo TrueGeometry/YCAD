@@ -7,18 +7,28 @@ import { addAnnotation, toggleAnnotations, clearAnnotations } from '../annotatio
 
 export const viewCommands = {
     '/view': {
-        desc: 'Set camera (front, iso, fit...)',
+        desc: 'Set camera (front, iso, fit, top, side...)',
         execute: (argRaw) => {
-            const view = argRaw.toLowerCase();
-            const validViews = ['front', 'top', 'side', 'iso'];
+            const args = argRaw.trim().split(/\s+/);
+            const view = args[0].toLowerCase();
+            const validViews = ['front', 'top', 'side', 'right', 'left', 'back', 'bottom', 'iso'];
+            
             if (view === 'fit') {
-                fitGeometryView();
-                addMessageToChat('system', 'Camera fitted to content.');
+                // Check if optional size argument is provided
+                // e.g., /view fit 1000
+                const sizeArg = args[1];
+                if (sizeArg && !isNaN(parseFloat(sizeArg))) {
+                    fitGeometryView(parseFloat(sizeArg));
+                    addMessageToChat('system', `Camera view adjusted to size ${sizeArg}.`);
+                } else {
+                    fitGeometryView();
+                    addMessageToChat('system', 'Camera fitted to visible content.');
+                }
             } else if (validViews.includes(view)) {
                 setCameraView(view);
                 addMessageToChat('system', `Switched to ${view} view.`);
             } else {
-                addMessageToChat('system', 'Usage: /view [front|side|top|iso|fit]');
+                addMessageToChat('system', 'Usage: /view [front|back|top|bottom|left|right|iso|fit [size]]');
             }
         }
     },

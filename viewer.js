@@ -9,7 +9,7 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { appState } from './state.js';
 import { loadAndDisplayGLB } from './loader.js';
 import { initCollisions, onDragStart, onDragMove, onDragEnd } from './collisions.js'; 
-import { initOrigin } from './origin.js';
+import { initOrigin, updateOriginScale } from './origin.js'; // Added updateOriginScale
 import { recordAction } from './recorder.js'; 
 import { pushUndoState } from './history.js'; // Import History
 
@@ -411,33 +411,73 @@ export function animate() {
     }
 }
 
+// Helper: Get Bounding Box of all visible user content
+function getVisibleBounds() {
+    const box = new THREE.Box3();
+    let hasContent = false;
+
+    if (!appState.scene) return { box, hasContent };
+
+    appState.scene.traverse(child => {
+        if (child.visible && (child.isMesh || child.isGroup)) {
+             // Exclude system
+             if (child.name === 'GridHelper' || child.name === 'Origin' || child.name === 'Work Features') return;
+             if (child.type.includes('Control') || child.type.includes('Camera') || child.type.includes('Light')) return;
+             
+             // System flag check
+             if (child.userData && child.userData.isSystem) return;
+             
+             const objBox = new THREE.Box3().setFromObject(child);
+             if (!objBox.isEmpty()) {
+                 box.union(objBox);
+                 hasContent = true;
+             }
+        }
+    });
+    return { box, hasContent };
+}
+
 export function setCameraView(view) {
     if (!appState.camera || !appState.controls) return;
     
-    const distance = 15;
-    appState.controls.target.set(0, 0, 0);
+    // 1. Get Scene Bounds to Center Camera
+    const { box, hasContent } = getVisibleBounds();
+    const center = hasContent ? new THREE.Vector3() : new THREE.Vector3(0,0,0);
+    
+    if (hasContent && !box.isEmpty()) {
+        box.getCenter(center);
+    }
+
+    // 2. Set Target to Center of Object(s)
+    appState.controls.target.copy(center);
+
+    // 3. Determine Orientation Vector
+    const dir = new THREE.Vector3();
+    const up = new THREE.Vector3(0, 1, 0); // Default Up
 
     switch (view) {
-        case 'front': 
-            appState.camera.up.set(0, 1, 0);
-            appState.camera.position.set(0, 0, distance); 
-            break;
-        case 'side': 
-            appState.camera.up.set(0, 1, 0);
-            appState.camera.position.set(distance, 0, 0); 
-            break;
-        case 'top': 
-            appState.camera.up.set(0, 0, -1);
-            appState.camera.position.set(0, distance, 0); 
-            break;
-        case 'iso': 
-            appState.camera.up.set(0, 1, 0);
-            appState.camera.position.set(distance, distance, distance); 
-            break;
+        case 'front': dir.set(0, 0, 1); break;
+        case 'back':  dir.set(0, 0, -1); break;
+        case 'right': 
+        case 'side':  dir.set(1, 0, 0); break;
+        case 'left':  dir.set(-1, 0, 0); break;
+        case 'top':   dir.set(0, 1, 0); up.set(0, 0, -1); break;
+        case 'bottom':dir.set(0, -1, 0); up.set(0, 0, 1); break;
+        case 'iso':   dir.set(1, 1, 1).normalize(); break;
+        default:      dir.set(0, 0, 1); break; // Default Front
     }
+
+    // 4. Set Camera Position (Center + Direction)
+    // Note: The distance will be adjusted by fitGeometryView immediately after.
+    // We just need to establish the vector.
+    appState.camera.position.copy(center).add(dir);
+    appState.camera.up.copy(up);
+    appState.camera.lookAt(center);
     
-    appState.camera.lookAt(0, 0, 0);
     appState.controls.update();
+    
+    // 5. Fit View (Handles Zoom, Near/Far clipping, and Distance)
+    fitGeometryView();
     
     // Sync split cameras if active
     if (appState.isSplitView) syncOrthoCameras();
@@ -501,51 +541,78 @@ export function getTaggableObjects() {
     return list;
 }
 
-export function fitGeometryView() {
+export function fitGeometryView(manualSize = null) {
     if (!appState.camera || !appState.controls || !appState.scene) return;
 
-    const box = new THREE.Box3();
-    let hasContent = false;
+    // Use shared helper
+    const { box, hasContent } = getVisibleBounds();
 
-    appState.scene.children.forEach(child => {
-        if ((child.name === 'loaded_glb' || child.name === 'fallback_cube') && child.visible) {
-             child.updateMatrixWorld(true);
-             const objBox = new THREE.Box3().setFromObject(child);
-             if (!objBox.isEmpty()) {
-                 box.union(objBox);
-                 hasContent = true;
-             }
-        }
-    });
-
-    if (!hasContent || box.isEmpty()) return;
+    if ((!hasContent || box.isEmpty()) && !manualSize) return;
 
     const center = new THREE.Vector3();
-    box.getCenter(center);
+    if (!box.isEmpty()) box.getCenter(center);
     
-    const direction = new THREE.Vector3().subVectors(appState.camera.position, appState.controls.target).normalize();
-    const distance = 50; 
+    // Determine target Radius/Size
+    let radius = 10;
+    if (manualSize) {
+        radius = parseFloat(manualSize) / 2.0;
+    } else {
+        const sphere = new THREE.Sphere();
+        box.getBoundingSphere(sphere);
+        radius = sphere.radius;
+    }
     
+    if (radius <= 0.001) radius = 1;
+
+    // 1. Position Camera
+    // Move camera back along its current vector relative to target
+    // We want the camera to be comfortably outside the bounding sphere.
+    const currentDir = new THREE.Vector3().subVectors(appState.camera.position, appState.controls.target).normalize();
+    if (currentDir.lengthSq() < 0.1) currentDir.set(0, 0, 1); 
+    
+    // Distance calculation: Ensure we are far enough to not clip "Near" plane if we reset it.
+    // For Ortho, placement distance doesn't affect perspective, but it does affect Near/Far clipping.
+    // We place camera far away and set Planes to cover the object.
+    const distance = Math.max(50, radius * 4);
+    
+    const newPos = center.clone().add(currentDir.multiplyScalar(distance));
+    appState.camera.position.copy(newPos);
     appState.controls.target.copy(center);
-    appState.camera.position.copy(center).add(direction.multiplyScalar(distance));
     
-    const sphere = new THREE.Sphere();
-    box.getBoundingSphere(sphere);
-    const diameter = sphere.radius * 2 || 1;
+    // 2. Adjust Planes dynamically for large objects
+    // Near must be small positive. Far must be large enough to see past the object.
+    // Object spans [center - radius] to [center + radius].
+    // Camera is at [center + distance].
+    // Depth needed is approx distance + radius.
+    appState.camera.near = 0.1;
+    appState.camera.far = distance + radius * 10 + 1000; // Generous buffer
     
-    const frustumHeight = 20; 
-    const aspect = (appState.camera.right - appState.camera.left) / (appState.camera.top - appState.camera.bottom);
+    // 3. Adjust Zoom (Frustum Size)
+    const frustumHeight = 20; // The base frustum height used in onWindowResize
+    const diameter = radius * 2;
     
-    const padding = 0.8; 
+    // Calculate aspect ratio
+    const width = displayArea.clientWidth;
+    const height = displayArea.clientHeight;
+    const effectiveWidth = appState.isSplitView ? width / 2 : width;
+    const aspect = effectiveWidth / height;
+    
+    const padding = 0.8; // fit within 80% of screen
+    
     const zoomForHeight = frustumHeight / diameter;
     const zoomForWidth = (frustumHeight * aspect) / diameter;
     
     let newZoom = Math.min(zoomForHeight, zoomForWidth) * padding;
-    newZoom = Math.min(Math.max(newZoom, 0.1), 100);
+    
+    // Clamp zoom to prevent degenerate values
+    newZoom = Math.min(Math.max(newZoom, 0.0001), 100);
     
     appState.camera.zoom = newZoom;
     appState.camera.updateProjectionMatrix();
     appState.controls.update();
+    
+    // 4. Update Origin Scale to match scene size
+    updateOriginScale(radius);
     
     if (appState.isSplitView) syncOrthoCameras();
 }

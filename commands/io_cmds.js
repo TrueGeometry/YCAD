@@ -37,7 +37,7 @@ export const ioCommands = {
     '/download': { alias: '/save' },
 
     '/load': {
-        desc: 'Load session from JSON',
+        desc: 'Load session (JSON) or script (TXT)',
         execute: () => {
             uploadAndRestoreSession();
         }

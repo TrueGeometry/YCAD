@@ -51,24 +51,58 @@ export function downloadSession() {
 export function uploadAndRestoreSession() {
     const input = document.createElement('input');
     input.type = 'file';
-    input.accept = 'application/json';
+    input.accept = '.json,.txt'; // Allow JSON and TXT
     
     input.onchange = (e) => {
         const file = e.target.files[0];
         if (!file) return;
         
         const reader = new FileReader();
-        reader.onload = (event) => {
+        reader.onload = async (event) => {
+            const text = event.target.result;
+            
+            // 1. Try Session JSON
             try {
-                const sessionData = JSON.parse(event.target.result);
+                const sessionData = JSON.parse(text);
                 if (sessionData.log && Array.isArray(sessionData.log)) {
                     restoreSession(sessionData.log);
-                } else {
-                    addMessageToChat('system', '⚠️ Invalid session file format.');
+                    return; // Success as JSON
                 }
             } catch (err) {
-                console.error(err);
-                addMessageToChat('system', '⚠️ Error parsing session file.');
+                // Ignore JSON parse error, fall through to script processing
+            }
+
+            // 2. Try Command Script (Line-by-line)
+            const lines = text.split(/\r?\n/);
+            const commands = lines
+                .map(l => l.trim())
+                .filter(l => l.length > 0 && !l.startsWith('#') && !l.startsWith('//')); // Ignore comments/empty
+
+            if (commands.length > 0) {
+                addMessageToChat('system', `📜 <b>Running Script: ${file.name}</b>`);
+                toggleLoading(true);
+                appState.isReplaying = true; // Don't record these actions into history during playback
+
+                try {
+                    for (const cmd of commands) {
+                        // Only execute lines that look like commands
+                        if (cmd.startsWith('/')) {
+                            addMessageToChat('system', `> ${cmd}`);
+                            await executeCommand(cmd);
+                            // Small delay for UI updates/animations between steps
+                            await new Promise(r => setTimeout(r, 200));
+                        }
+                    }
+                    addMessageToChat('system', '✅ Script execution finished.');
+                } catch (e) {
+                    console.error(e);
+                    addMessageToChat('system', `⚠️ Script execution stopped: ${e.message}`);
+                } finally {
+                    appState.isReplaying = false;
+                    toggleLoading(false);
+                }
+            } else {
+                addMessageToChat('system', '⚠️ File appears empty or invalid.');
             }
         };
         reader.readAsText(file);

@@ -34,6 +34,8 @@ import { FLANGED_ELBOW_DEMO } from './flanged_elbow.js';
 import { CREO_SWEEP_DEMO } from './creo_sweep.js';
 import { VARIABLE_DUCT_DEMO } from './variable_duct.js';
 import { S_PIPE_DEMO } from './s_pipe.js';
+import { SENSOR_DEMO } from './sensor.js';
+import { CORNER_HOUSING_DEMO } from './corner_housing.js';
 
 export const DEMO_REGISTRY = {
     'table': TABLE_DEMO,
@@ -95,5 +97,49 @@ export const DEMO_REGISTRY = {
     'variable_duct': VARIABLE_DUCT_DEMO,
     'rounded_sweep': VARIABLE_DUCT_DEMO, // alias
     's_pipe': S_PIPE_DEMO,
-    'hollow_pipe': S_PIPE_DEMO // alias
+    'hollow_pipe': S_PIPE_DEMO, // alias
+    'sensor': SENSOR_DEMO,
+    'remote': SENSOR_DEMO, // alias
+    'corner': CORNER_HOUSING_DEMO,
+    'housing': CORNER_HOUSING_DEMO // alias
+};
+
+export const DEMO_METADATA = {
+    'table': { name: 'Wooden Table', icon: 'table' },
+    'chair': { name: 'Simple Chair', icon: 'armchair' },
+    'house': { name: 'Small House', icon: 'home' },
+    'mug': { name: 'Coffee Mug', icon: 'coffee' },
+    'bookshelf': { name: 'Bookshelf', icon: 'library' },
+    'snowman': { name: 'Snowman', icon: 'snowflake' },
+    'wheel': { name: 'Wagon Wheel', icon: 'circle-dashed' },
+    'bridge': { name: 'Bridge', icon: 'construction' },
+    'car': { name: 'Simple Car', icon: 'car' },
+    'ship': { name: 'Cargo Ship', icon: 'ship' },
+    'sketch': { name: 'Sketch Profiles', icon: 'pencil' },
+    'key': { name: 'Cyber Key', icon: 'key' },
+    'flange': { name: 'Pipe Flange', icon: 'disc' },
+    'storage': { name: 'Storage Bin', icon: 'box' },
+    'drawer': { name: 'Drawer Unit', icon: 'archive' },
+    'knob': { name: 'Knurled Knob', icon: 'circle-dot' },
+    'hook': { name: 'Wall Hook', icon: 'anchor' },
+    'latch': { name: 'Sliding Latch', icon: 'lock' },
+    'cable': { name: 'Cable Organizer', icon: 'cable' },
+    'stand': { name: 'Phone Stand', icon: 'smartphone' },
+    'holder': { name: 'Headphone Holder', icon: 'headphones' },
+    'measure': { name: 'Measuring Cup', icon: 'beaker' },
+    'spoon': { name: 'Spoon Holder', icon: 'utensils' },
+    'coaster': { name: 'Coaster', icon: 'circle' },
+    'pot': { name: 'Plant Pot', icon: 'flower-2' },
+    'keychain': { name: 'Keychain Tag', icon: 'tag' },
+    'pen': { name: 'Pen Holder', icon: 'pen-tool' },
+    'tweezers': { name: 'Tweezers', icon: 'scissors' },
+    'seal': { name: 'Bowl Seal', icon: 'circle' },
+    'clip': { name: 'Bag Clip', icon: 'paperclip' },
+    'duct': { name: 'Swept Duct', icon: 'wind' },
+    'elbow': { name: 'Flanged Elbow', icon: 'corner-down-right' },
+    'creo': { name: 'Variable Sweep', icon: 'activity' },
+    'variable_duct': { name: 'Rounded Sweep', icon: 'activity' },
+    's_pipe': { name: 'S-Pipe', icon: 'activity' },
+    'sensor': { name: 'IoT Sensor', icon: 'radio' },
+    'corner': { name: 'Corner Housing', icon: 'box-select' }
 };

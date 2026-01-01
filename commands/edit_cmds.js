@@ -6,6 +6,7 @@ import { resolveTarget } from './utils.js';
 import { deleteObject, highlightInTree, updateFeatureTree } from '../tree.js';
 import { attachTransformControls, setTransformMode, getTaggableObjects } from '../viewer.js';
 import { performUndo, performRedo } from '../history.js';
+import { updateParametricMesh } from './primitive_cmds.js';
 
 export const editCommands = {
     '/delete': {
@@ -25,6 +26,84 @@ export const editCommands = {
     },
     '/del': { alias: '/delete' },
     '/remove': { alias: '/delete' },
+
+    '/duplicate': {
+        desc: 'Duplicate object (@Target)',
+        execute: (argRaw) => {
+            const { object, name } = resolveTarget(argRaw);
+            if (!object) {
+                addMessageToChat('system', '⚠️ No object selected to duplicate.');
+                return;
+            }
+            
+            // Clone the object (Deep copy of hierarchy)
+            const clone = object.clone();
+            
+            // Unique Name Generation
+            let baseName = object.userData.filename || object.name || 'Object';
+            // Clean up previous copy suffixes
+            baseName = baseName.replace(/_copy.*$/, '');
+            const timestamp = Date.now().toString().slice(-4);
+            const newName = `${baseName}_copy_${timestamp}`;
+            
+            clone.name = newName;
+            if (!clone.userData) clone.userData = {};
+            clone.userData.filename = newName;
+            
+            // Reset "Fixed" status if cloning a work plane/axis
+            if (clone.userData.isFixed) delete clone.userData.isFixed;
+            
+            // Clone Material to ensure independence (Visuals)
+            clone.traverse((node) => {
+                if (node.isMesh && node.material) {
+                    if (Array.isArray(node.material)) {
+                        node.material = node.material.map(m => m.clone());
+                    } else {
+                        node.material = node.material.clone();
+                    }
+                }
+            });
+            
+            // Intelligent Offset: Try to base it on object size
+            // We use the original object's bounds to determine a safe offset
+            let offset = 2;
+            try {
+                const box = new THREE.Box3().setFromObject(object);
+                if (!box.isEmpty()) {
+                    const size = new THREE.Vector3();
+                    box.getSize(size);
+                    const maxDim = Math.max(size.x, size.y, size.z);
+                    // Offset by ~20% of size, clamped for sanity
+                    if (maxDim > 0) offset = Math.max(0.5, Math.min(10, maxDim * 0.25));
+                }
+            } catch(e) { /* Fallback to 2 */ }
+
+            clone.position.x += offset;
+            clone.position.z += offset;
+            
+            // CRITICAL FIX: Add to the original parent to maintain transform context.
+            // If we add to scene root, we lose the parent's scale/rotation.
+            if (object.parent) {
+                object.parent.add(clone);
+            } else {
+                appState.scene.add(clone);
+            }
+            
+            // Ensure matrices update
+            clone.updateMatrix();
+            clone.updateMatrixWorld(true);
+            
+            // Select new object
+            appState.currentDisplayObject = clone;
+            attachTransformControls(clone);
+            updateFeatureTree();
+            highlightInTree(clone);
+            
+            addMessageToChat('system', `Duplicated <b>${name}</b> to <b>${newName}</b> (Offset ${offset.toFixed(1)})`);
+        }
+    },
+    '/clone': { alias: '/duplicate' },
+    '/copy': { alias: '/duplicate' },
 
     '/rename': {
         desc: 'Rename object (@Target NewName)',
@@ -169,6 +248,35 @@ export const editCommands = {
     },
     '/rot': { alias: '/rotate' },
 
+    '/fillet': {
+        desc: 'Round edges of object (@Target radius)',
+        execute: (argRaw) => {
+            const { object, name } = resolveTarget(argRaw);
+            if (!object) {
+                addMessageToChat('system', '⚠️ No object selected.');
+                return;
+            }
+            
+            // Parse radius from args
+            const args = argRaw.split(/\s+/);
+            const valStr = args.find(a => !isNaN(parseFloat(a)) && !a.startsWith('@'));
+            const radius = parseFloat(valStr) || 0.5;
+
+            if (!object.userData.isParametric) {
+                 addMessageToChat('system', `⚠️ Object '${name}' is not parametric (Box or Extrusion). Cannot apply fillet.`);
+                 return;
+            }
+
+            // Update parameter
+            object.userData.fillet = radius;
+            
+            // Regenerate
+            updateParametricMesh(object);
+            addMessageToChat('system', `Applied fillet radius ${radius} to ${name}`);
+        }
+    },
+    '/round': { alias: '/fillet' },
+
     '/dock': {
         desc: 'Snap object to another (@Src @Tgt)',
         execute: (argRaw) => {
@@ -289,6 +397,39 @@ export const editCommands = {
             
             if(!object.userData) object.userData = {};
             object.userData[key] = val;
+            
+            // --- Visual Enhancements ---
+            // If the user sets color, opacity, or wireframe, apply it immediately.
+            const lowerKey = key.toLowerCase();
+            
+            if (lowerKey === 'color' || lowerKey === 'colour') {
+                object.traverse(c => {
+                    if (c.isMesh && c.material) {
+                        c.material.color.set(val);
+                        // Also set emissive slightly if it's dark to make it pop? No, stick to standard.
+                    }
+                });
+            }
+            else if (lowerKey === 'opacity') {
+                const op = parseFloat(val);
+                if (!isNaN(op)) {
+                    object.traverse(c => {
+                        if (c.isMesh && c.material) {
+                            c.material.transparent = op < 1.0;
+                            c.material.opacity = op;
+                            c.material.needsUpdate = true;
+                        }
+                    });
+                }
+            }
+            else if (lowerKey === 'wireframe') {
+                const isWire = (val.toLowerCase() === 'true' || val === '1' || val.toLowerCase() === 'on');
+                object.traverse(c => {
+                    if (c.isMesh && c.material) {
+                        c.material.wireframe = isWire;
+                    }
+                });
+            }
             
             addMessageToChat('system', `Set ${name}.${key} = ${val}`);
             updateFeatureTree();

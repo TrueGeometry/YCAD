@@ -43,8 +43,6 @@ export function getTestCommands(executor) {
                     if (item && DEMO_REGISTRY[item]) {
                         await runDemoSequence(executor, DEMO_REGISTRY[item]);
                     } else {
-                        // Dynamically list available keys (filtering out aliases for brevity if desired, 
-                        // but showing all keys is fine for discovery)
                         const keys = Object.keys(DEMO_REGISTRY).join(', ');
                         addMessageToChat('system', `Usage: /tg_test_ui build [item]<br>Available Demos: ${keys}`);
                     }
@@ -77,6 +75,14 @@ export function getTestCommands(executor) {
                     { cmd: '/parametric cylinder 3 3 10', delay: 1000 },
                     { cmd: '/subtract @Cube_8 @Cylinder_3x3x10', delay: 3000, narration: txt.bool_sub },
                     
+                    // Boolean Intersection Test
+                    { cmd: '/parametric box 6 6 6', delay: 1000, narration: txt.bool_int },
+                    { cmd: '/tag_last BoxInt', delay: 500 },
+                    { cmd: '/parametric sphere 4', delay: 1000 },
+                    { cmd: '/tag_last SphInt', delay: 500 },
+                    { cmd: '/intersect @BoxInt @SphInt', delay: 3000 },
+                    { cmd: '/delete @intersect_BoxInt_SphInt', delay: 1000 },
+
                     { cmd: '/view iso', delay: 500 }, 
                     { cmd: '/view fit', delay: 1500, narration: txt.reset_view },
 
@@ -89,6 +95,12 @@ export function getTestCommands(executor) {
                     { cmd: '/extrude @SketchRect 5', delay: 2500, narration: txt.extrude },
                     { cmd: '/setprop @Extrude_SketchRect height 12', delay: 2500, narration: txt.param_change },
                     
+                    // Fillet & Rename Test
+                    { cmd: '/parametric cube 5', delay: 1000, narration: txt.fillet_op },
+                    { cmd: '/move 15 0 0', delay: 500 },
+                    { cmd: '/fillet @Cube_5 1', delay: 2000 },
+                    { cmd: '/rename @Cube_5 RoundedBox', delay: 1500, narration: txt.rename_op },
+
                     // --- 4. History (Undo/Redo) ---
                     { cmd: '/move 0 5 0', delay: 1000 },
                     { cmd: '/undo', delay: 1500, narration: txt.history_undo },
@@ -97,11 +109,17 @@ export function getTestCommands(executor) {
                     { cmd: '/view iso', delay: 500 }, 
                     { cmd: '/view fit', delay: 1500, narration: txt.reset_view },
 
-                    // --- 5. Docking Test ---
+                    // --- 5. Docking & Primitives ---
                     { cmd: '/parametric cube 4', delay: 1000, narration: txt.dock_setup },
                     { cmd: '/parametric cylinder 4 4 2', delay: 1000 },
                     { cmd: '/move 10 0 0', delay: 500 }, 
                     { cmd: '/dock @Cylinder_4x4x2 @Cube_4', delay: 2500, narration: txt.dock_action },
+                    
+                    // Extra Primitives
+                    { cmd: '/parametric torus 3 1', delay: 1000, narration: txt.prim_test },
+                    { cmd: '/move 0 10 0', delay: 500 },
+                    { cmd: '/parametric cone 2 4', delay: 1000 },
+                    { cmd: '/move 5 10 0', delay: 500 },
 
                     { cmd: '/view iso', delay: 500 }, 
                     { cmd: '/view fit', delay: 1500, narration: txt.reset_view },
@@ -158,6 +176,7 @@ export function getTestCommands(executor) {
 
                     // --- 10. Conclusion ---
                     { cmd: '/save', delay: 2000, narration: txt.save_session },
+                    { cmd: '/export_glb', delay: 2000, narration: txt.export_op },
                     { cmd: '/view iso', delay: 1500, narration: txt.final_iso },
                     { cmd: '/view fit', delay: 1000, narration: txt.complete }
                 ];

@@ -37,6 +37,8 @@ appState.globalTxtValue = urlParams.get('txt');
         if (window.lucide) window.lucide.createIcons();
 
         const initialQuery = urlParams.get('query');
+        const demoKey = urlParams.get('demo');
+
         if (initialQuery) {
             addMessageToChat('user', initialQuery);
             
@@ -46,6 +48,13 @@ appState.globalTxtValue = urlParams.get('txt');
             } else {
                 await sendMessage(initialQuery);
             }
+        } else if (demoKey) {
+            // Handle Demo Mode
+            // Small delay to ensure scene is fully ready
+            setTimeout(async () => {
+                addMessageToChat('system', `🚀 <b>Launching Demo: ${demoKey}</b>`);
+                await executeCommand(`/tg_test_ui build ${demoKey}`);
+            }, 500);
         } else {
              if (appState.currentDisplayObject) {
                  addMessageToChat('agent', "Hello! Describe the "+(appState.globalTxtValue || "part")+" you'd like to design.");

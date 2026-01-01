@@ -5,31 +5,32 @@ import { addMessageToChat } from './ui.js';
 import { originCommands } from './commands/origin_cmds.js';
 import { patternCommands } from './commands/pattern_cmds.js';
 import { ioCommands } from './commands/io_cmds.js';
-import { exportCommands } from './commands/export_cmds.js'; // Import Export commands
+import { exportCommands } from './commands/export_cmds.js'; 
 import { analyticsCommands } from './commands/analytics_cmds.js';
 import { editCommands } from './commands/edit_cmds.js';
 import { viewCommands } from './commands/view_cmds.js';
-import { kbeCommands } from './commands/kbe_cmds.js'; // Import KBE commands
-import { primitiveCommands } from './commands/primitive_cmds.js'; // Import Primitive commands
-import { sketchCommands } from './commands/sketch_cmds.js'; // Import Sketch commands
-import { csgCommands } from './commands/csg_cmds.js'; // Import CSG commands
+import { kbeCommands } from './commands/kbe_cmds.js'; 
+import { primitiveCommands } from './commands/primitive_cmds.js'; 
+import { sketchCommands } from './commands/sketch_cmds.js'; 
+import { csgCommands } from './commands/csg_cmds.js'; 
+import { filletCommands } from './commands/fillet_cmds.js'; // Import Fillet
 import { getTestCommands } from './commands/test_cmds.js';
 import { recordAction } from './recorder.js'; 
-import { pushUndoState } from './history.js'; // Import Undo logic
+import { pushUndoState } from './history.js'; 
 
 const COMMAND_REGISTRY = {
     ...originCommands,
     ...patternCommands,
     ...ioCommands,
-    ...exportCommands, // Register Export commands
+    ...exportCommands, 
     ...analyticsCommands,
     ...editCommands,
     ...viewCommands,
     ...kbeCommands,
-    ...primitiveCommands, // Register Primitives
-    ...sketchCommands,    // Register Sketch Commands
-    ...csgCommands,       // Register CSG Commands
-    // Inject the executor so the test module can run commands without circular imports
+    ...primitiveCommands, 
+    ...sketchCommands,    
+    ...csgCommands,       
+    ...filletCommands,    // Register Fillet
     ...getTestCommands((cmd) => executeCommand(cmd)),
 
     '/help': {
@@ -53,23 +54,22 @@ const COMMAND_REGISTRY = {
 
 export function getCommandList() {
     return Object.entries(COMMAND_REGISTRY)
-        .filter(([_, val]) => !val.alias) // Exclude aliases from listing
+        .filter(([_, val]) => !val.alias) 
         .map(([key, val]) => ({ cmd: key, desc: val.desc }));
 }
 
-// List of commands that modify geometry and should trigger an undo snapshot
 const MODIFICATION_COMMANDS = [
     '/move', '/translate', '/rotate', '/rot', '/scale', '/dock',
     '/delete', '/del', '/remove', '/setprop', '/delprop',
     '/add', '/open', '/parametric', '/parameteric', '/addshape',
     '/pattern', '/workplane', '/workaxis', '/kbe_model',
     '/extrude', '/subtract', '/union', '/intersect',
-    '/sketch_on', '/sketch_draw', '/annotate', '/annotate clear'
+    '/sketch_on', '/sketch_draw', '/annotate', '/annotate clear',
+    '/fillet', '/round'
 ];
 
 function isDestructive(cmd) {
     if (MODIFICATION_COMMANDS.includes(cmd)) return true;
-    // Also check wildcard logic for simple checks
     if (cmd.startsWith('/parametric') || cmd.startsWith('/sketch')) return true;
     return false;
 }
@@ -80,20 +80,15 @@ export async function executeCommand(input) {
     const argRaw = input.substring(cmd.length).trim();
 
     if (COMMAND_REGISTRY[cmd]) {
-        // Resolve alias
         let def = COMMAND_REGISTRY[cmd];
         if (def.alias) {
-            // Check original name for destructive check if alias is used
             if (isDestructive(def.alias)) pushUndoState();
             def = COMMAND_REGISTRY[def.alias];
         } else {
              if (isDestructive(cmd)) pushUndoState();
         }
         
-        // Execute (support async commands)
         await def.execute(argRaw);
-        
-        // Record the command if successful
         recordAction('cmd', input);
         
         return true;
