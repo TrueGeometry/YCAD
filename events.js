@@ -94,6 +94,26 @@ export function bindGlobalEvents() {
     bindClick('sketch-composite-btn', () => { toggleCompositePanel(); recordAction('sketch', 'composite_panel'); });
     bindClick('sketch-poly-btn', () => { togglePolylineTool(); recordAction('sketch', 'polyline_tool'); });
     
+    // Boolean Buttons
+    bindClick('sketch-bool-union-btn', () => { 
+        const input = document.getElementById('message-input');
+        input.value = '/sketch_union ';
+        input.focus();
+        addMessageToChat('system', 'Sketch Union: Type <b>@Target @Tool</b> to merge profiles.');
+    });
+    bindClick('sketch-bool-sub-btn', () => { 
+        const input = document.getElementById('message-input');
+        input.value = '/sketch_subtract ';
+        input.focus();
+        addMessageToChat('system', 'Sketch Subtract: Type <b>@Target @Tool</b> to cut profile.');
+    });
+    bindClick('sketch-bool-int-btn', () => { 
+        const input = document.getElementById('message-input');
+        input.value = '/sketch_intersect ';
+        input.focus();
+        addMessageToChat('system', 'Sketch Intersect: Type <b>@Target @Tool</b> to keep overlap.');
+    });
+    
     bindClick('sketch-ok-btn', () => { 
         finishPolyline(); 
         exitSketchMode(); 
@@ -107,6 +127,72 @@ export function bindGlobalEvents() {
     bindClick('comp-add-eq', () => { addCompositeSegmentRow('equation'); });
     bindClick('comp-add-line', () => { addCompositeSegmentRow('line'); });
     bindClick('comp-create-btn', () => { createCompositeFromUI(); recordAction('sketch', 'composite_create'); });
+
+    // Script Paste Controls
+    const scriptPopup = document.getElementById('script-input-popup');
+    const scriptOverlay = document.getElementById('script-overlay');
+    const scriptText = document.getElementById('script-textarea');
+    const lineNumbers = document.getElementById('script-line-numbers');
+    
+    const closeScriptPopup = () => {
+        if(scriptPopup) scriptPopup.style.display = 'none';
+        if(scriptOverlay) scriptOverlay.style.display = 'none';
+    };
+
+    bindClick('paste-script-btn', () => {
+        if(scriptPopup) {
+            scriptPopup.style.display = 'flex'; // Flex for internal layout
+            if(scriptOverlay) scriptOverlay.style.display = 'block';
+            scriptText.focus();
+            if(window.lucide) window.lucide.createIcons({ root: scriptPopup });
+        }
+    });
+    
+    bindClick('script-close-btn', closeScriptPopup);
+    bindClick('script-clear-btn', () => { 
+        if(scriptText) {
+            scriptText.value = ''; 
+            if(lineNumbers) lineNumbers.innerHTML = '1';
+        } 
+    });
+    
+    if(scriptText) {
+        // Line number sync
+        scriptText.addEventListener('input', () => {
+            const lines = scriptText.value.split('\n').length;
+            if(lineNumbers) {
+                lineNumbers.innerHTML = Array(lines).fill(0).map((_, i) => i + 1).join('<br>');
+            }
+        });
+        // Scroll sync
+        scriptText.addEventListener('scroll', () => {
+            if(lineNumbers) lineNumbers.scrollTop = scriptText.scrollTop;
+        });
+    }
+    
+    bindClick('script-run-btn', async () => {
+        if(!scriptText) return;
+        const content = scriptText.value;
+        if(!content.trim()) return;
+        
+        closeScriptPopup();
+        
+        const lines = content.split(/\r?\n/);
+        addMessageToChat('system', `📜 <b>Running Pasted Script (${lines.length} lines)</b>`);
+        
+        // Execute line by line
+        for (const line of lines) {
+            const cmd = line.trim();
+            if (cmd && !cmd.startsWith('#') && !cmd.startsWith('//')) {
+                // Auto-prepend / if missing, assuming it is a command from a script context
+                let commandToRun = cmd.startsWith('/') ? cmd : '/' + cmd;
+                await executeCommand(commandToRun);
+                // Small delay to allow UI/Three.js updates between heavy operations
+                await new Promise(r => setTimeout(r, 50)); 
+            }
+        }
+        addMessageToChat('system', '✅ Script execution finished.');
+    });
 
     // Theme Controls
     const themeBtn = document.getElementById('theme-btn');

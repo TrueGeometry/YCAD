@@ -101,6 +101,125 @@
     to { opacity: 1; transform: translateY(0); }
 }
 
+/* Script Popup Specifics */
+#script-input-popup {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 600px;
+    max-width: 90vw;
+    height: auto;
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    border: 1px solid #e5e7eb;
+    padding: 0; /* Reset padding for internal layout */
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.popup-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background-color: #f9fafb;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.close-btn {
+    color: #9ca3af;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+.close-btn:hover { background-color: #fee2e2; color: #ef4444; }
+.close-btn svg { width: 16px; height: 16px; }
+
+.editor-container {
+    display: flex;
+    background-color: #1e1e1e; /* Dark theme */
+    height: 300px;
+    position: relative;
+}
+
+.line-numbers {
+    width: 40px;
+    background-color: #252526;
+    color: #858585;
+    text-align: right;
+    padding: 10px 8px;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 13px;
+    line-height: 1.5;
+    user-select: none;
+    overflow: hidden;
+    border-right: 1px solid #333;
+}
+
+#script-textarea {
+    flex-grow: 1;
+    background-color: #1e1e1e;
+    color: #d4d4d4; /* VS Code light text */
+    border: none;
+    padding: 10px;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 13px;
+    line-height: 1.5;
+    resize: none;
+    outline: none;
+    white-space: pre;
+    overflow-y: scroll; /* Scroll handled here */
+}
+/* Scrollbar for editor */
+#script-textarea::-webkit-scrollbar { width: 10px; }
+#script-textarea::-webkit-scrollbar-track { background: #1e1e1e; }
+#script-textarea::-webkit-scrollbar-thumb { background: #424242; border-radius: 5px; }
+#script-textarea::-webkit-scrollbar-thumb:hover { background: #4f4f4f; }
+
+.popup-footer {
+    padding: 12px 16px;
+    background-color: #ffffff;
+    border-top: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.primary-btn {
+    background-color: #2563eb;
+    color: white;
+    padding: 6px 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: background-color 0.2s;
+}
+.primary-btn:hover { background-color: #1d4ed8; }
+
+.secondary-btn {
+    background-color: #ffffff;
+    color: #4b5563;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    border: 1px solid #d1d5db;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+.secondary-btn:hover { background-color: #f3f4f6; }
+
 /* Section Controls */
 .section-row {
     display: flex;

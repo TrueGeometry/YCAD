@@ -55,6 +55,10 @@
                     <button id="sketch-composite-btn" title="Composite Curve" style="padding: 6px 12px;"><i data-lucide="merge"></i></button>
                     <div style="width:1px; height:20px; background:#ddd; margin:0 4px;"></div>
                     <button id="sketch-poly-btn" title="Polyline" style="padding: 6px 12px;"><i data-lucide="activity"></i></button>
+                    <div style="width:1px; height:20px; background:#ddd; margin:0 4px;"></div>
+                    <button id="sketch-bool-union-btn" title="Union Sketches" style="padding: 6px 12px;"><i data-lucide="combine"></i></button>
+                    <button id="sketch-bool-sub-btn" title="Subtract Sketches" style="padding: 6px 12px;"><i data-lucide="scissors"></i></button>
+                    <button id="sketch-bool-int-btn" title="Intersect Sketches" style="padding: 6px 12px;"><i data-lucide="intersect"></i></button>
                 </div>
                 <div class="flex items-center gap-2 mt-2 mb-2 px-1">
                      <input type="checkbox" id="sketch-autoclose" class="accent-emerald-600 w-4 h-4">
@@ -140,6 +144,38 @@
                 </div>
             </div>
 
+            <!-- Script Overlay Backdrop -->
+            <div id="script-overlay" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 99; backdrop-filter: blur(2px);"></div>
+
+            <!-- Pop-up: Script Input -->
+            <div id="script-input-popup" class="popup-control-panel" style="display: none; z-index: 100;">
+                <div class="popup-header">
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="terminal" class="w-4 h-4 text-blue-600"></i>
+                        <span class="text-sm font-bold text-gray-800">Command Script</span>
+                    </div>
+                    <button id="script-close-btn" class="close-btn"><i data-lucide="x"></i></button>
+                </div>
+                
+                <div class="editor-container">
+                    <div class="line-numbers" id="script-line-numbers">1</div>
+                    <textarea id="script-textarea" placeholder="// Enter commands here..." spellcheck="false"></textarea>
+                </div>
+
+                <div class="popup-footer">
+                    <div class="text-xs text-gray-400 flex items-center gap-1">
+                        <i data-lucide="info" class="w-3 h-3"></i> 
+                        <span>/parametric, /move, /rotate...</span>
+                    </div>
+                    <div class="flex gap-2">
+                        <button id="script-clear-btn" class="secondary-btn">Clear</button>
+                        <button id="script-run-btn" class="primary-btn">
+                            <i data-lucide="play" class="w-3 h-3"></i> Run
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             <!-- Main Controls Bar -->
             <div id="controls-area">
                 <!-- View Group -->
@@ -196,6 +232,7 @@
                  <div class="control-group" style="margin-left:8px;">
                     <button id="save-session-btn" title="Save Session" style="color:#10b981;"><i data-lucide="save"></i> Save</button>
                     <button id="load-session-btn" title="Load Session" style="color:#f59e0b;"><i data-lucide="upload-cloud"></i> Load</button>
+                    <button id="paste-script-btn" title="Paste Script" style="color:#8b5cf6;"><i data-lucide="clipboard-list"></i> Script</button>
                 </div>
                 
                 <input type="file" id="file-upload-input" accept=".glb,.gltf" style="display:none;">
