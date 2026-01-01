@@ -1,0 +1,261 @@
+{
+  "sessionId": "sensor-build-session-001",
+  "createdAt": "2025-01-01T10:00:00.000Z",
+  "log": [
+    {
+      "timestamp": 1767028700000,
+      "type": "cmd",
+      "payload": "/view iso"
+    },
+    {
+      "timestamp": 1767028701000,
+      "type": "cmd",
+      "payload": "/origin"
+    },
+    {
+      "timestamp": 1767028702000,
+      "type": "cmd",
+      "payload": "/sketch_on XZ"
+    },
+    {
+      "timestamp": 1767028703000,
+      "type": "cmd",
+      "payload": "/sketch_draw rounded_rect 50 18 6"
+    },
+    {
+      "timestamp": 1767028704000,
+      "type": "cmd",
+      "payload": "/sketch_off"
+    },
+    {
+      "timestamp": 1767028705000,
+      "type": "cmd",
+      "payload": "/extrude @SketchRounded_rect 12"
+    },
+    {
+      "timestamp": 1767028706000,
+      "type": "cmd",
+      "payload": "/tag_last BottomCap"
+    },
+    {
+      "timestamp": 1767028706500,
+      "type": "cmd",
+      "payload": "/setprop @BottomCap color #be123c"
+    },
+    {
+      "timestamp": 1767028707000,
+      "type": "cmd",
+      "payload": "/workplane offset XZ 12"
+    },
+    {
+      "timestamp": 1767028708000,
+      "type": "cmd",
+      "payload": "/sketch_on XZ_Plane_Offset_12"
+    },
+    {
+      "timestamp": 1767028709000,
+      "type": "cmd",
+      "payload": "/sketch_draw rounded_rect 50 18 6"
+    },
+    {
+      "timestamp": 1767028710000,
+      "type": "cmd",
+      "payload": "/sketch_off"
+    },
+    {
+      "timestamp": 1767028711000,
+      "type": "cmd",
+      "payload": "/extrude @SketchRounded_rect 45"
+    },
+    {
+      "timestamp": 1767028712000,
+      "type": "cmd",
+      "payload": "/tag_last MainBody"
+    },
+    {
+      "timestamp": 1767028712500,
+      "type": "cmd",
+      "payload": "/setprop @MainBody color #14b8a6"
+    },
+    {
+      "timestamp": 1767028713000,
+      "type": "cmd",
+      "payload": "/parametric cylinder 3 3 20"
+    },
+    {
+      "timestamp": 1767028714000,
+      "type": "cmd",
+      "payload": "/move 15 67 0"
+    },
+    {
+      "timestamp": 1767028714500,
+      "type": "cmd",
+      "payload": "/tag_last Antenna"
+    },
+    {
+      "timestamp": 1767028715000,
+      "type": "cmd",
+      "payload": "/setprop @Antenna color #1f2937"
+    },
+    {
+      "timestamp": 1767028716000,
+      "type": "cmd",
+      "payload": "/view front"
+    },
+    {
+      "timestamp": 1767028717000,
+      "type": "cmd",
+      "payload": "/parametric cylinder 0.8 0.8 4"
+    },
+    {
+      "timestamp": 1767028717500,
+      "type": "cmd",
+      "payload": "/rotate 90 0 0"
+    },
+    {
+      "timestamp": 1767028718000,
+      "type": "cmd",
+      "payload": "/move -12 45 9"
+    },
+    {
+      "timestamp": 1767028718500,
+      "type": "cmd",
+      "payload": "/tag_last SpeakerHole"
+    },
+    {
+      "timestamp": 1767028719000,
+      "type": "cmd",
+      "payload": "/parametric cylinder 0.8 0.8 4"
+    },
+    {
+      "timestamp": 1767028719500,
+      "type": "cmd",
+      "payload": "/rotate 90 0 0"
+    },
+    {
+      "timestamp": 1767028720000,
+      "type": "cmd",
+      "payload": "/move -15 45 9"
+    },
+    {
+      "timestamp": 1767028720500,
+      "type": "cmd",
+      "payload": "/tag_last H2"
+    },
+    {
+      "timestamp": 1767028721000,
+      "type": "cmd",
+      "payload": "/parametric cylinder 0.8 0.8 4"
+    },
+    {
+      "timestamp": 1767028721500,
+      "type": "cmd",
+      "payload": "/rotate 90 0 0"
+    },
+    {
+      "timestamp": 1767028722000,
+      "type": "cmd",
+      "payload": "/move -9 45 9"
+    },
+    {
+      "timestamp": 1767028722500,
+      "type": "cmd",
+      "payload": "/tag_last H3"
+    },
+    {
+      "timestamp": 1767028723000,
+      "type": "cmd",
+      "payload": "/parametric cylinder 0.8 0.8 4"
+    },
+    {
+      "timestamp": 1767028723500,
+      "type": "cmd",
+      "payload": "/rotate 90 0 0"
+    },
+    {
+      "timestamp": 1767028724000,
+      "type": "cmd",
+      "payload": "/move -12 48 9"
+    },
+    {
+      "timestamp": 1767028724500,
+      "type": "cmd",
+      "payload": "/tag_last H4"
+    },
+    {
+      "timestamp": 1767028725000,
+      "type": "cmd",
+      "payload": "/parametric cylinder 0.8 0.8 4"
+    },
+    {
+      "timestamp": 1767028725500,
+      "type": "cmd",
+      "payload": "/rotate 90 0 0"
+    },
+    {
+      "timestamp": 1767028726000,
+      "type": "cmd",
+      "payload": "/move -12 42 9"
+    },
+    {
+      "timestamp": 1767028726500,
+      "type": "cmd",
+      "payload": "/tag_last H5"
+    },
+    {
+      "timestamp": 1767028728000,
+      "type": "cmd",
+      "payload": "/subtract @MainBody @SpeakerHole @H2 @H3 @H4 @H5"
+    },
+    {
+      "timestamp": 1767028729000,
+      "type": "cmd",
+      "payload": "/tag_last MainBody"
+    },
+    {
+      "timestamp": 1767028730000,
+      "type": "cmd",
+      "payload": "/parametric cylinder 1.5 1.5 1"
+    },
+    {
+      "timestamp": 1767028730500,
+      "type": "cmd",
+      "payload": "/rotate 90 0 0"
+    },
+    {
+      "timestamp": 1767028731000,
+      "type": "cmd",
+      "payload": "/move 12 45 9"
+    },
+    {
+      "timestamp": 1767028731500,
+      "type": "cmd",
+      "payload": "/tag_last LED"
+    },
+    {
+      "timestamp": 1767028732000,
+      "type": "cmd",
+      "payload": "/setprop @LED color #ef4444"
+    },
+    {
+      "timestamp": 1767028733000,
+      "type": "cmd",
+      "payload": "/union @BottomCap @MainBody @Antenna @LED"
+    },
+    {
+      "timestamp": 1767028734000,
+      "type": "cmd",
+      "payload": "/tag_last SensorNode"
+    },
+    {
+      "timestamp": 1767028735000,
+      "type": "cmd",
+      "payload": "/view iso"
+    },
+    {
+      "timestamp": 1767028736000,
+      "type": "cmd",
+      "payload": "/view fit"
+    }
+  ]
+}

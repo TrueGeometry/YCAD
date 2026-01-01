@@ -1,0 +1,21 @@
+# Sample Design Script
+# Creates a simple red cube and rotates it
+
+# 1. Reset View
+/view iso
+
+# 2. Create Geometry
+/parametric cube 10
+/tag_last MyCube
+
+# 3. Position and Rotate
+/move 0 5 0
+/rotate 0 45 0
+
+# 4. Style
+/setprop @MyCube color #ef4444
+/setprop @MyCube material plastic
+
+# 5. Finalize
+/view fit
+/annotate @MyCube Hello_World
