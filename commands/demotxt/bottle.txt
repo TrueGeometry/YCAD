@@ -1,0 +1,31 @@
+# Bottle Design Script
+# Demonstrates: Sketching, Composite Curves, Revolution, and Materials
+
+# 1. Setup View
+/view front
+/sketch_on XY
+
+# 2. Draw Bottle Profile (Half-section with thickness)
+# Points: Center Bottom -> Outer Edge -> Shoulder -> Neck -> Lip -> Inner Wall -> Close
+/sketch_draw composite [{"type":"line","x":0,"y":0},{"type":"line","x":4,"y":0},{"type":"line","x":4,"y":6},{"type":"line","x":1.5,"y":10},{"type":"line","x":1.5,"y":13},{"type":"line","x":2.0,"y":13},{"type":"line","x":2.0,"y":13.5},{"type":"line","x":1.0,"y":13.5},{"type":"line","x":1.0,"y":10},{"type":"line","x":3.5,"y":6},{"type":"line","x":3.5,"y":0.5},{"type":"line","x":0,"y":0.5},{"type":"line","x":0,"y":0}]
+/tag_last Profile
+
+# 3. Draw Revolution Axis
+/sketch_draw line 0 -2 0 15
+/tag_last Axis
+
+/sketch_off
+
+# 4. Revolve Profile around Axis
+/revolve @Profile @Axis 360
+/tag_last MyBottle
+
+# 5. Apply Material Properties (Glass)
+/setprop @MyBottle material glass
+/setprop @MyBottle color #a5f3fc
+/setprop @MyBottle opacity 0.6
+
+# 6. Final View
+/view iso
+/rotate 0 360 0
+/view fit

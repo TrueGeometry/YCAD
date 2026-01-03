@@ -1,0 +1,44 @@
+# Cyberpunk Key Design Script
+/view top
+
+# 1. Handle Sketch
+/sketch_on XY
+/sketch_draw composite [{"type":"line","x":0,"y":-3},{"type":"line","x":3,"y":0},{"type":"line","x":3,"y":4},{"type":"line","x":0,"y":5},{"type":"line","x":-3,"y":4},{"type":"line","x":-3,"y":0},{"type":"line","x":0,"y":-3}]
+/tag_last KeySketch
+/sketch_off
+
+# 2. Extrusion
+/view iso
+/extrude @KeySketch 1.5
+/tag_last KeyHandle
+/setprop @KeyHandle material titanium
+
+# 3. Keyring Hole
+/parametric cylinder 1.2 1.2 4
+/tag_last DrillBit
+/rotate 90 0 0
+/move 0 2.5 0.75
+/subtract @KeyHandle @DrillBit
+/tag_last KeyHandleBored
+
+# 4. Shaft
+/parametric cylinder 0.6 0.6 12
+/tag_last KeyShaft
+/move 0 -6 0.75
+
+# 5. Cutting Bits
+/parametric box 1 2 2
+/tag_last NotchCutter
+/move 0.5 -10 0.75
+/subtract @KeyShaft @NotchCutter
+/tag_last KeyShaftNotched
+
+# 6. Collar Ring
+/parametric torus 0.8 0.2
+/tag_last KeyRing
+/rotate 90 0 0
+/move 0 -3.5 0.75
+/setprop @KeyRing material neon_light
+
+/view fit
+# Union and Export to be handled manually or by demo runner

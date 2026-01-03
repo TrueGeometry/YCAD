@@ -1,0 +1,66 @@
+# Variable Sweep Design Script
+/view iso
+
+# 1. Base Plate
+/parametric box 14 2 10
+/move 0 1 0
+/tag_last Base
+
+# 2. Holes
+/parametric cylinder 0.8 0.8 4
+/move -5 1 -3.5
+/tag_last Drill
+/pattern rect 2 2 10 7
+/subtract @Base @Drill @Drill_1_0 @Drill_0_1 @Drill_1_1
+/tag_last BasePlate
+
+# 3. Path
+/sketch_on XY
+/sketch_draw equation 10*(1-cos(t)) 2+(10*sin(t)) 0 1.57
+/tag_last GuidePath
+/sketch_off
+
+# 4. Profiles
+/workplane offset XZ 2
+/sketch_on XZ_Plane_Offset_2
+/sketch_draw rect 8 6
+/tag_last StartProf
+/sketch_off
+
+/workplane offset YZ 10
+/sketch_on YZ_Plane_Offset_10
+/sketch_draw circle 2.5
+/tag_last EndProf
+/sketch_off
+/move 0 12 0
+
+# 5. Sweep
+/sweep_variable @StartProf @EndProf @GuidePath solid align:z rot:0
+/tag_last PipeBody
+
+# 6. Top Flange
+/parametric cylinder 4 4 2
+/rotate 0 0 90
+/move 11 12 0
+/tag_last TopFlange
+
+# 7. Merge & Bore
+/union @BasePlate @PipeBody @TopFlange
+/tag_last MainBody
+/parametric cylinder 2 2 5
+/rotate 0 0 90
+/move 11 12 0
+/subtract @MainBody @Cylinder_2x2x5
+
+# 8. Rib
+/sketch_on XY
+/sketch_draw composite [{"type":"line","x":0,"y":2},{"type":"line","x":4,"y":2},{"type":"line","x":0,"y":6},{"type":"line","x":0,"y":2}]
+/tag_last RibSketch
+/sketch_off
+/extrude @RibSketch 1
+/move 0 0 -0.5
+/tag_last Rib
+/union @subtract_MainBody_Cylinder_2x2x5 @Rib
+
+/setprop @union_subtract_MainBody_Cylinder_2x2x5_Rib material cast_iron
+/view fit

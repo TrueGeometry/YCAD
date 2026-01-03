@@ -8,6 +8,7 @@ import { loadAndDisplayGLB, updateDesign, applyStateToObject } from './loader.js
 import { renderAttachments } from './chat-logic.js';
 import { getSceneStructure } from './report.js';
 import { captureAnnotatedImage } from './capture.js'; // Import from capture module
+import { executeCommand } from './commands.js'; 
 
 const chatInput = document.getElementById('message-input');
 const sendButton = document.getElementById('send-button');
@@ -68,18 +69,66 @@ export async function sendMessage(message) {
 
         const data = await response.json(); 
 
-        if (data.reply) addMessageToChat('agent', data.reply);
-        else {
-            const signupUrl = 'https://www.truegeometry.com/pages/prod/sign-in.html';
-            addMessageToChat('agent', `It looks like that requires an account. <a href="${signupUrl}" target="_blank" rel="noopener noreferrer">Please Sign Up here</a> to proceed.`);
-        }
+        // Handle CAD Command Script from Server
+        if (data.cad_command && data.reply) {
+            addMessageToChat('system', '🤖 <b>Executing Agent Script...</b>');
+            
+            let scriptContent = data.reply;
+            
+            // 1. Attempt to extract content from Markdown code blocks
+            // Matches ```language\n content ``` or just ```\n content ```
+            const codeBlockRegex = /```(?:[\w]*)(?:[\r\n]+)([\s\S]*?)```/g;
+            const matches = [...scriptContent.matchAll(codeBlockRegex)];
+            
+            if (matches.length > 0) {
+                // If code blocks found, only execute what's inside them
+                scriptContent = matches.map(m => m[1]).join('\n');
+            }
 
-        if (data['3DglbV2File'] && typeof data['3DglbV2File'] === 'string') {
-            // Modified to 'add' mode to append to existing scene instead of replacing
-            loadAndDisplayGLB(data['3DglbV2File'], 'add');
-        } else if (data.designUpdate && typeof data.designUpdate === 'object') {
-            const appliedParams = updateDesign(data.designUpdate);
-            if (appliedParams) addHistoryEntry(appliedParams, applyStateToObject);
+            const lines = scriptContent.split(/\r?\n/);
+            for (const line of lines) {
+                let cmd = line.trim();
+                
+                // 2. Clean Markdown list markers and quotes (e.g. "- ", "* ", "> ")
+                cmd = cmd.replace(/^[\s]*[->*]\s+/, '');
+
+                // 3. Clean inline code backticks (e.g. `/move` or just `move`)
+                cmd = cmd.replace(/`/g, '');
+
+                // 4. Filter comments and empty lines
+                if (!cmd || cmd.startsWith('//') || cmd.startsWith('#')) continue;
+
+                // 5. Robust Slash Handling: Remove ALL leading slashes, then add exactly one.
+                // This prevents double slashes (e.g. //move) if the model adds one and we add another,
+                // or handles cases where the model forgets the slash.
+                const cleanCmd = cmd.replace(/^[\/]+/, '');
+                const commandToRun = '/' + cleanCmd;
+                
+                addMessageToChat('system', `<span style="color:#2563eb; font-family:monospace;">> ${commandToRun}</span>`);
+                await executeCommand(commandToRun);
+                
+                // Small delay for UI updates
+                await new Promise(r => setTimeout(r, 100)); 
+            }
+            addMessageToChat('system', '✅ Execution complete.');
+        } 
+        else {
+            // Standard Flow: Text Reply + Optional GLB/Updates
+            if (data.reply) {
+                addMessageToChat('agent', data.reply);
+            }
+            else {
+                const signupUrl = 'https://www.truegeometry.com/pages/prod/sign-in.html';
+                addMessageToChat('agent', `It looks like that requires an account. <a href="${signupUrl}" target="_blank" rel="noopener noreferrer">Please Sign Up here</a> to proceed.`);
+            }
+
+            if (data['3DglbV2File'] && typeof data['3DglbV2File'] === 'string') {
+                // Modified to 'add' mode to append to existing scene instead of replacing
+                loadAndDisplayGLB(data['3DglbV2File'], 'add');
+            } else if (data.designUpdate && typeof data.designUpdate === 'object') {
+                const appliedParams = updateDesign(data.designUpdate);
+                if (appliedParams) addHistoryEntry(appliedParams, applyStateToObject);
+            }
         }
 
     } catch (error) {

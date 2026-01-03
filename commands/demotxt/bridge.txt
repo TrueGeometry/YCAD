@@ -1,0 +1,27 @@
+# Bridge Design Script
+/view iso
+
+# 1. The River
+/parametric box 10 1 30
+/setprop @Box_10x1x30 material water
+/move 0 -2 0
+
+# 2. Pillars
+/parametric cylinder 1 1 8
+/move -3 0 -10
+
+# 3. Pattern Pillars
+/pattern rect 2 3 6 10
+
+# 4. The Road Deck
+/parametric box 8 0.5 32
+/move 0 4 0
+/setprop @Box_8x0.5x32 material concrete
+
+# 5. Side Rails
+/parametric box 0.5 1 32
+/move -3.5 4.75 0
+/parametric box 0.5 1 32
+/move 3.5 4.75 0
+
+/view fit

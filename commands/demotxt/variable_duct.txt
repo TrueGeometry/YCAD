@@ -1,0 +1,31 @@
+# Variable Duct Design Script
+/view iso
+
+# 1. Path
+/sketch_on XY
+/sketch_draw equation 12*(1-cos(t)) 12*sin(t) 0 1.57
+/tag_last Path
+/sketch_off
+
+# 2. Start Profile
+/sketch_on XZ
+/sketch_draw rounded_rect 6 4 1
+/tag_last StartProfile
+/sketch_off
+
+# 3. End Profile
+/workplane offset YZ 12
+/sketch_on YZ_Plane_Offset_12
+/sketch_draw rounded_rect 10 8 2
+/tag_last EndProfile
+/sketch_off
+/move 0 12 0
+
+# 4. Sweep
+/sweep_variable @StartProfile @EndProfile @Path solid rot:90
+/tag_last Duct
+
+# 5. Finish
+/setprop @Duct color silver
+/setprop @Duct material aluminum
+/view fit

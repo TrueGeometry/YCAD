@@ -48,6 +48,7 @@ export function initSketchMode(planeName) {
     group.name = `Sketch_${plane.name.replace(/\s+/g, '')}_${Date.now().toString().slice(-4)}`;
     group.userData.type = 'Sketch';
     group.userData.planeRef = plane.name;
+    group.userData.cmd = `/sketch_on ${planeName}`; // Record context creation
     
     // Copy Plane Transform
     group.position.copy(plane.position);
@@ -114,7 +115,7 @@ export function promptForEquation() {
             const minT = parseFloat(parts[2]) || 0;
             const maxT = parseFloat(parts[3]) || 6.28;
             
-            createSketchShape('equation', [xEq, yEq, minT, maxT, 100]);
+            createSketchShape('equation', [xEq, yEq, minT, maxT, 100], `Equation: ${input}`);
         } else {
             addMessageToChat('system', '⚠️ Invalid format. Use: x(t), y(t), min, max');
         }
@@ -215,7 +216,7 @@ export function createCompositeFromUI() {
 
     if (segments.length > 0) {
         // Use JSON string to pass complex data via the factory pattern
-        createSketchShape('composite', [JSON.stringify(segments)]);
+        createSketchShape('composite', [JSON.stringify(segments)], "Composite Curve UI Builder");
         document.getElementById('composite-controls').style.display = 'none';
     } else {
         addMessageToChat('system', '⚠️ Add at least one segment.');
@@ -374,6 +375,7 @@ export function finishPolyline(forceClose = false) {
     // CRITICAL for Extrusion: Save 2D points (x, y)
     lineObj.userData.profile = points.map(p => new THREE.Vector2(p.x, p.y));
     lineObj.userData.closed = isClosed;
+    lineObj.userData.cmd = "Polyline Tool";
 
     sketchState.sketchGroup.add(lineObj);
     
@@ -429,7 +431,7 @@ function segmentsIntersect(s1, s2) {
     return (ccw(a, c, d) !== ccw(b, c, d)) && (ccw(a, b, c) !== ccw(a, b, d));
 }
 
-export function createSketchShape(type, args) {
+export function createSketchShape(type, args, cmdString = '') {
     if (!sketchState.isActive || !sketchState.sketchGroup) {
         if (initSketchMode('XY Plane')) { } else { return; }
     }
@@ -479,6 +481,7 @@ export function createSketchShape(type, args) {
     lineObj.userData.filename = lineObj.name; // Ensure filename is set for discovery
     lineObj.userData.isParametric = true;
     lineObj.userData.shapeType = configKey;
+    lineObj.userData.cmd = cmdString; // Store creation command
     Object.assign(lineObj.userData, params);
 
     // Generate Profile Data for Extrusion

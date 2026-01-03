@@ -1,0 +1,34 @@
+# Snowman Design Script
+/view iso
+
+# Bottom
+/parametric sphere 4
+/move 0 4 0
+
+# Middle
+/parametric sphere 3
+/move 0 10 0
+
+# Head
+/parametric sphere 2
+/move 0 14.5 0
+
+# Eyes
+/parametric sphere 0.3
+/move 1 15 1.5
+/setprop @Sphere_0.3 material coal
+/parametric sphere 0.3
+/move -1 15 1.5
+
+# Nose
+/parametric cone 0.5 2
+/rotate 90 0 0
+/move 0 14.5 2.5
+
+# Hat
+/parametric cylinder 2.5 2.5 0.5
+/move 0 16.2 0
+/parametric cylinder 1.5 1.5 3
+/move 0 17.5 0
+
+/view fit

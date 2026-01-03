@@ -1,0 +1,42 @@
+# Corner Housing Design Script
+/view iso
+
+# 1. Stock
+/parametric box 12 12 12
+/move 0 6 0
+/tag_last Stock
+
+# 2. Pocket Tool
+/parametric box 10 10 12 2
+/move 0 8 0
+/tag_last PocketTool
+
+# 3. Cavity
+/subtract @Stock @PocketTool
+/tag_last Housing
+
+# 4. Section Cut
+/parametric box 6.1 13 6.1
+/move 3.05 6 3.05
+/tag_last SectionCutter
+/subtract @Housing @SectionCutter
+/tag_last FinalPart
+
+# 5. Markers
+/parametric sphere 0.2
+/move -3 2.5 -3
+/annotate @Sphere_0.2 Spherical_Face
+/setprop @Sphere_0.2 color red
+
+/parametric sphere 0.2
+/move -5 8 0
+/annotate @Sphere_0.2 Cylindrical_Face
+/setprop @Sphere_0.2 color red
+
+/parametric sphere 0.2
+/move 0 12 -5
+/annotate @Sphere_0.2 Top_Edge
+/setprop @Sphere_0.2 color red
+
+/setprop @FinalPart material polished_steel
+/view fit

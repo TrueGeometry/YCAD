@@ -9,8 +9,38 @@ import { updateFeatureTree, deleteObject } from '../tree.js';
 import { getTaggableObjects } from '../viewer.js';
 import { generateSweptMesh } from './sweep_lib.js';
 
+// Helper to extract points for Revolve
+function getRevolvePoints(obj) {
+    obj.updateMatrixWorld(true);
+    const points = [];
+    
+    // Priority: Profile from Sketch (User Data)
+    if (obj.userData && obj.userData.profile) {
+        obj.userData.profile.forEach(p => {
+            const v = new THREE.Vector3(p.x, p.y, 0).applyMatrix4(obj.matrixWorld);
+            points.push(v);
+        });
+        // Check closure
+        if(obj.userData.closed && points.length > 0) {
+             if(points[0].distanceTo(points[points.length-1]) > 0.0001) {
+                 points.push(points[0].clone());
+             }
+        }
+    } 
+    // Fallback: Raw Geometry (Line/Mesh)
+    else if (obj.geometry) {
+        const pos = obj.geometry.attributes.position;
+        if(pos) {
+            for(let i=0; i<pos.count; i++) {
+                points.push(new THREE.Vector3().fromBufferAttribute(pos, i).applyMatrix4(obj.matrixWorld));
+            }
+        }
+    }
+    return points;
+}
+
 // Helper to execute sweep with specific profile count constraints
-async function executeSweep(argRaw, constraints = {}) {
+async function executeSweep(argRaw, constraints = {}, cmdString = '') {
     const args = argRaw.trim().split(/\s+/);
     const mentions = [];
     const sweepOptions = { align: null, twist: 0, rotation: 0, capped: false, thickness: 0 };
@@ -87,6 +117,7 @@ async function executeSweep(argRaw, constraints = {}) {
     try {
         const mesh = generateSweptMesh(pathObj, sections, sweepOptions);
         if (mesh) {
+            mesh.userData.cmd = cmdString;
             appState.scene.add(mesh);
             appState.currentDisplayObject = mesh;
             attachTransformControls(mesh);
@@ -104,7 +135,7 @@ async function executeSweep(argRaw, constraints = {}) {
 export const csgCommands = {
     '/extrude': {
         desc: 'Extrude 2D Sketch to 3D (@Sketch height)',
-        execute: async (argRaw) => {
+        execute: async (argRaw, cmdString) => {
             const { object, name } = resolveTarget(argRaw);
             
             // Parse height from args
@@ -189,6 +220,7 @@ export const csgCommands = {
             mesh.userData.height = heightVal;
             // Copy profile points (clone to ensure independence)
             mesh.userData.profile = object.userData.profile.map(p => ({ x: p.x, y: p.y }));
+            mesh.userData.cmd = cmdString;
 
             // Transform: Match Sketch Group Transform
             // The geometry is created in local XY plane. We need to move it to the sketch's world transform.
@@ -215,24 +247,125 @@ export const csgCommands = {
         }
     },
 
+    '/revolve': {
+        desc: 'Revolve profile around axis (@Profile @Axis [angle])',
+        execute: (argRaw, cmdString) => {
+            const args = argRaw.trim().split(/\s+/);
+            const mentions = args.filter(a => a.startsWith('@'));
+            const numbers = args.filter(a => !a.startsWith('@') && !isNaN(parseFloat(a)));
+            
+            if (mentions.length < 2) {
+                addMessageToChat('system', 'Usage: /revolve @Profile @Axis [angle]');
+                return;
+            }
+            
+            // Resolve Objects
+            const { object: profileObj, name: profileName } = resolveTarget(mentions[0]);
+            const { object: axisObj, name: axisName } = resolveTarget(mentions[1]);
+            
+            const angleDeg = numbers.length > 0 ? parseFloat(numbers[0]) : 360;
+            const angleRad = THREE.MathUtils.degToRad(angleDeg);
+            
+            if (!profileObj || !axisObj) {
+                addMessageToChat('system', '⚠️ Profile or Axis object not found.');
+                return;
+            }
+            
+            // 1. Get Axis Line
+            const axisPoints = getRevolvePoints(axisObj);
+            if (axisPoints.length < 2) {
+                addMessageToChat('system', '⚠️ Axis must define a line (at least 2 points).');
+                return;
+            }
+            
+            // Use first and last point for axis
+            const p1 = axisPoints[0];
+            const p2 = axisPoints[axisPoints.length - 1];
+            const axisDir = new THREE.Vector3().subVectors(p2, p1).normalize();
+            const axisOrigin = p1.clone();
+            
+            // 2. Get Profile Points
+            const profilePoints = getRevolvePoints(profileObj);
+            if (profilePoints.length < 2) {
+                addMessageToChat('system', '⚠️ Profile must have points.');
+                return;
+            }
+            
+            // 3. Convert Profile to Lathe Coordinate System (Radius, Y)
+            // Lathe rotates around Y-axis (Radius is X).
+            const lathePoints = [];
+            
+            profilePoints.forEach(p => {
+                const vec = new THREE.Vector3().subVectors(p, axisOrigin);
+                const projection = vec.dot(axisDir); // Distance along axis (Y)
+                
+                const closestPointOnAxis = axisOrigin.clone().add(axisDir.clone().multiplyScalar(projection));
+                const radiusVec = new THREE.Vector3().subVectors(p, closestPointOnAxis);
+                const radius = radiusVec.length(); // Distance from axis (X)
+                
+                lathePoints.push(new THREE.Vector2(radius, projection));
+            });
+            
+            // 4. Generate Geometry
+            const geometry = new THREE.LatheGeometry(lathePoints, 32, 0, angleRad);
+            
+            // 5. Create Mesh
+            const material = new THREE.MeshStandardMaterial({
+                color: 0x6366f1, 
+                side: THREE.DoubleSide,
+                metalness: 0.2,
+                roughness: 0.5
+            });
+            const mesh = new THREE.Mesh(geometry, material);
+            
+            // 6. Transform Mesh to World Space
+            // LatheGeometry is constructed around (0,0,0) with Y-up.
+            // We need to align (0,1,0) to axisDir and position at axisOrigin.
+            
+            const up = new THREE.Vector3(0, 1, 0);
+            const quaternion = new THREE.Quaternion().setFromUnitVectors(up, axisDir);
+            
+            mesh.position.copy(axisOrigin);
+            mesh.quaternion.copy(quaternion);
+            
+            // Metadata
+            mesh.name = `Revolve_${profileName}`;
+            mesh.userData.filename = mesh.name;
+            mesh.userData.cmd = cmdString;
+            mesh.userData.isParametric = true;
+            mesh.userData.shapeType = 'revolve';
+            mesh.userData.angle = angleDeg;
+            
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            
+            appState.scene.add(mesh);
+            appState.currentDisplayObject = mesh;
+            attachTransformControls(mesh);
+            updateFeatureTree();
+            
+            addMessageToChat('system', `✅ Revolved <b>${profileName}</b> around <b>${axisName}</b>.`);
+        }
+    },
+
     '/sweep_uniform': {
         desc: 'Sweep 1 Profile along Path (@Profile @Path [twist:deg] [rot:deg] [thick:val])',
-        execute: async (argRaw) => executeSweep(argRaw, { exact: 1 })
+        execute: async (argRaw, cmdString) => executeSweep(argRaw, { exact: 1 }, cmdString)
     },
 
     '/sweep_variable': {
         desc: 'Sweep Start to End (@Start @End @Path [thick:val])',
-        execute: async (argRaw) => executeSweep(argRaw, { exact: 2 })
+        execute: async (argRaw, cmdString) => executeSweep(argRaw, { exact: 2 }, cmdString)
     },
 
     '/sweep_variable_section': {
         desc: 'Sweep N Profiles (@P1 @P2 ... @Path)',
-        execute: async (argRaw) => executeSweep(argRaw, { min: 1 })
+        execute: async (argRaw, cmdString) => executeSweep(argRaw, { min: 1 }, cmdString)
     },
 
     '/sweep_variable_section_multiple': {
         desc: 'Multi-section Sweep (Alias)',
-        execute: async (argRaw) => executeSweep(argRaw, { min: 1 })
+        execute: async (argRaw, cmdString) => executeSweep(argRaw, { min: 1 }, cmdString)
     },
 
     '/sweep': {
@@ -241,21 +374,21 @@ export const csgCommands = {
 
     '/subtract': {
         desc: 'Boolean Subtract (@Target @Tool1 ...)',
-        execute: async (argRaw) => {
-            await performBoolean('subtract', argRaw);
+        execute: async (argRaw, cmdString) => {
+            await performBoolean('subtract', argRaw, null, cmdString);
         }
     },
 
     '/union': {
         desc: 'Boolean Union (@Obj1 @Obj2 ...)',
-        execute: async (argRaw) => {
-            await performBoolean('union', argRaw);
+        execute: async (argRaw, cmdString) => {
+            await performBoolean('union', argRaw, null, cmdString);
         }
     },
 
     '/union_all': {
         desc: 'Union ALL visible meshes',
-        execute: async () => {
+        execute: async (argRaw, cmdString) => {
              const allMeshes = [];
              const traverseVisible = (object) => {
                  if (!object.visible) return;
@@ -278,19 +411,19 @@ export const csgCommands = {
                  return;
              }
              addMessageToChat('system', `Found ${allMeshes.length} meshes. Unioning...`);
-             await performBoolean('union', '', allMeshes);
+             await performBoolean('union', '', allMeshes, cmdString);
         }
     },
 
     '/intersect': {
         desc: 'Boolean Intersect (@Obj1 @Obj2 ...)',
-        execute: async (argRaw) => {
-            await performBoolean('intersect', argRaw);
+        execute: async (argRaw, cmdString) => {
+            await performBoolean('intersect', argRaw, null, cmdString);
         }
     }
 };
 
-async function performBoolean(op, argRaw, explicitObjects = null) {
+async function performBoolean(op, argRaw, explicitObjects = null, cmdString = '') {
     let resolvedObjects = [];
     
     if (explicitObjects) {
@@ -375,6 +508,7 @@ async function performBoolean(op, argRaw, explicitObjects = null) {
         newName = newName.replace(/\s+/g, '_');
         resultMesh.name = newName;
         resultMesh.userData.filename = resultMesh.name;
+        resultMesh.userData.cmd = cmdString;
         
         resolvedObjects.forEach(obj => deleteObject(obj));
 

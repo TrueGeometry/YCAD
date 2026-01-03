@@ -5,8 +5,9 @@ import { appState } from '../state.js';
 import { attachTransformControls } from '../viewer.js';
 
 // Helper to select the new feature
-function selectNewFeature(obj) {
+function selectNewFeature(obj, cmdString) {
     if (obj) {
+        obj.userData.cmd = cmdString; // Record command
         appState.currentDisplayObject = obj;
         attachTransformControls(obj); // Will likely just detach gizmo if fixed, but updates selection state
     }
@@ -21,7 +22,7 @@ export const originCommands = {
     },
     '/workplane': {
         desc: 'Create plane (offset/angle)',
-        execute: (argRaw) => {
+        execute: (argRaw, cmdString) => {
             // Clean up arg to allow @mentions or simple names
             const cleanArg = argRaw.replace(/@/g, '').replace(/_/g, ' ');
             const args = cleanArg.split(/\s+/).map(s => s.trim().toLowerCase());
@@ -36,7 +37,7 @@ export const originCommands = {
                 const plane = createOffsetPlane(base, dist); 
                 if (plane) {
                     addMessageToChat('system', `Created work plane: ${plane.name}`);
-                    selectNewFeature(plane);
+                    selectNewFeature(plane, cmdString);
                 } else {
                     addMessageToChat('system', `⚠️ Base plane '${base}' not found.`);
                 }
@@ -49,7 +50,7 @@ export const originCommands = {
                 const plane = createRotatedPlane(base, axis, angle);
                 if (plane) {
                      addMessageToChat('system', `Created rotated plane: ${plane.name}`);
-                     selectNewFeature(plane);
+                     selectNewFeature(plane, cmdString);
                 } else {
                      addMessageToChat('system', `⚠️ Could not create plane. Check inputs.`);
                 }
@@ -62,7 +63,7 @@ export const originCommands = {
 
     '/workaxis': {
         desc: 'Create axis (offset/angle)',
-        execute: (argRaw) => {
+        execute: (argRaw, cmdString) => {
              const cleanArg = argRaw.replace(/@/g, '').replace(/_/g, ' ');
              const args = cleanArg.split(/\s+/).map(s => s.trim().toLowerCase());
              
@@ -77,7 +78,7 @@ export const originCommands = {
                  const axis = createOffsetAxis(base, dir, dist);
                  if (axis) {
                      addMessageToChat('system', `Created work axis: ${axis.name}`);
-                     selectNewFeature(axis);
+                     selectNewFeature(axis, cmdString);
                  } else {
                      addMessageToChat('system', '⚠️ Base axis not found.');
                  }
@@ -91,7 +92,7 @@ export const originCommands = {
                  const axis = createRotatedAxis(base, pivot, angle);
                  if (axis) {
                       addMessageToChat('system', `Created rotated axis: ${axis.name}`);
-                      selectNewFeature(axis);
+                      selectNewFeature(axis, cmdString);
                  } else {
                       addMessageToChat('system', '⚠️ Could not create axis. Check inputs.');
                  }

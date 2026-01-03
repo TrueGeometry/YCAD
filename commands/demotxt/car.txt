@@ -1,0 +1,44 @@
+# Simple Car Design Script
+/view iso
+
+# 1. Chassis
+/parametric box 4 1 8
+/move 0 1.5 0
+/setprop @Box_4x1x8 material metal
+
+# 2. Wheels
+# Front Left
+/parametric cylinder 1.2 1.2 1
+/rotate 0 0 90
+/move -2 1.2 2.5
+/setprop @Cylinder_1.2x1.2x1 material rubber
+
+# Front Right
+/parametric cylinder 1.2 1.2 1
+/rotate 0 0 90
+/move 2 1.2 2.5
+/setprop @Cylinder_1.2x1.2x1 material rubber
+
+# Rear Left
+/parametric cylinder 1.2 1.2 1
+/rotate 0 0 90
+/move -2 1.2 -2.5
+/setprop @Cylinder_1.2x1.2x1 material rubber
+
+# Rear Right
+/parametric cylinder 1.2 1.2 1
+/rotate 0 0 90
+/move 2 1.2 -2.5
+/setprop @Cylinder_1.2x1.2x1 material rubber
+
+# 3. Cabin
+/parametric box 3.5 2 4
+/move 0 3 0.5
+
+# 4. Headlights
+/parametric sphere 0.5
+/move -1.2 2 4
+/parametric sphere 0.5
+/move 1.2 2 4
+
+/view fit

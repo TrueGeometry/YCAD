@@ -1,0 +1,32 @@
+# Plant Pot Design Script
+/view iso
+
+# 1. Pot Body
+/parametric cylinder 5 3.5 8
+/tag_last PotSolid
+
+# 2. Hollow Tool
+/parametric cylinder 4.5 3 9
+/move 0 1 0
+/tag_last PotHollow
+
+# 3. Subtract
+/subtract @PotSolid @PotHollow
+/tag_last PotFinal
+
+# 4. Saucer
+/parametric cylinder 4.5 4 1
+/move 0 -4.5 0
+/tag_last SaucerBase
+
+# 5. Hollow Saucer
+/parametric cylinder 4 3.5 1
+/move 0 -4.2 0
+/subtract @SaucerBase @Cylinder_4x3.5x1
+/tag_last Saucer
+
+# 6. Finish
+/setprop @PotFinal material terracotta
+/setprop @Saucer material terracotta
+
+/view fit

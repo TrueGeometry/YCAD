@@ -1,0 +1,27 @@
+# Pipe Flange Design Script
+/view top
+
+# 1. Main Body
+/parametric cylinder 50 50 10
+/tag_last FlangeBody
+
+# 2. Center Bore
+/parametric cylinder 15 15 20
+/tag_last CenterBore
+/subtract @FlangeBody @CenterBore
+/tag_last FlangeStep1
+
+# 3. Bolt Hole Pattern
+/parametric cylinder 5 5 20
+/move 30 0 0
+/tag_last HoleCutter
+/pattern circ 4 360 y
+
+# 4. Subtract Holes
+/subtract @FlangeStep1 @HoleCutter @HoleCutter_c1 @HoleCutter_c2 @HoleCutter_c3
+/tag_last FinalFlange
+
+# 5. Finish
+/setprop @FinalFlange material steel
+/view iso
+/view fit

@@ -1,0 +1,32 @@
+# Drawer Unit Design Script
+/view iso
+
+# 1. Outer Casing
+/parametric box 12 8 20
+/tag_last OuterBox
+/parametric box 10 6 22
+/tag_last CaseCutter
+/move 0 0 -2
+/subtract @OuterBox @CaseCutter
+/tag_last Casing
+
+# 2. Drawer
+/parametric box 9.5 5.5 18
+/tag_last DrawerSolid
+/move 0 -0.25 -1
+/parametric box 8.5 5.5 16
+/tag_last DrawerScoop
+/move 0 1 -1
+/subtract @DrawerSolid @DrawerScoop
+/tag_last FinalDrawer
+
+# 3. Handle
+/parametric sphere 1.2
+/tag_last Knob
+/move 0 0 -10
+/union @FinalDrawer @Knob
+/tag_last DrawerAssembly
+
+# 4. Test
+/move 0 0 -5
+/view fit

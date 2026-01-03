@@ -1,0 +1,70 @@
+# Mounting Plate (Sketch) Design Script
+/view top
+
+# 1. Sketch Base
+/sketch_on XY
+/sketch_draw circle 96
+/tag_last S_Top
+/sketch_draw circle 54
+/move 0 -80 0
+/tag_last S_Bot
+/sketch_draw rect 160 100
+/move 0 -40 0
+/tag_last S_Neck
+
+# 2. Union
+/sketch_union @S_Top @S_Bot
+/sketch_union @S_Top @S_Neck
+
+# 3. Waist Cuts
+/sketch_draw circle 20
+/move 73.34 -90 0
+/tag_last S_CutR
+/sketch_subtract @S_Top @S_CutR
+/sketch_draw circle 20
+/move -73.34 -90 0
+/tag_last S_CutL
+/sketch_subtract @S_Top @S_CutL
+
+# 4. Holes
+/sketch_draw circle 15
+/move 0 64 0
+/tag_last H_Top
+/sketch_subtract @S_Top @H_Top
+
+/sketch_draw circle 15
+/move 55.42 32 0
+/tag_last H_Right
+/sketch_subtract @S_Top @H_Right
+
+/sketch_draw circle 15
+/move -55.42 32 0
+/tag_last H_Left
+/sketch_subtract @S_Top @H_Left
+
+/sketch_draw circle 25
+/tag_last H_Center
+/sketch_subtract @S_Top @H_Center
+
+/sketch_draw circle 20
+/move 0 -80 0
+/tag_last H_Bot
+/sketch_subtract @S_Top @H_Bot
+
+/sketch_draw circle 9
+/move 25 -90 0
+/tag_last Slot1
+/sketch_subtract @S_Top @Slot1
+
+/sketch_draw circle 9
+/move -25 -90 0
+/tag_last Slot2
+/sketch_subtract @S_Top @Slot2
+
+# 5. Extrude
+/sketch_off
+/view iso
+/extrude @S_Top 20
+/setprop @Extrude_S_Top material steel
+
+/view fit

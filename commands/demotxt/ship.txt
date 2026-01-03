@@ -1,0 +1,29 @@
+# Cargo Ship Design Script
+/view iso
+
+# 1. Hull
+/parametric box 6 3 20
+/move 0 1.5 0
+/setprop @Box_6x3x20 material steel
+
+# 2. Bridge Tower
+/parametric box 6 5 4
+/move 0 5.5 -7
+
+# 3. Funnel
+/parametric cylinder 1 1 4
+/move 0 9 -5
+/setprop @Cylinder_1x1x4 color red
+
+# 4. Cargo Containers
+/parametric box 1.5 1.5 3
+/move -1.5 3.75 0
+/setprop @Box_1.5x1.5x3 color blue
+/pattern rect 2 3 3 4
+
+# 5. Water level
+/parametric plane 40 40
+/rotate -90 0 0
+/move 0 1 0
+
+/view fit

@@ -1,0 +1,24 @@
+# House Design Script
+/view iso
+
+# 1. Main Body
+/parametric box 10 8 10
+/move 0 4 0
+
+# 2. Roof
+/parametric cone 8 4
+/move 0 10 0
+/setprop @Cone_8x4 name Roof
+
+# 3. Door Cutout
+/parametric box 3 5 5
+/move 0 2.5 4
+
+# 4. Boolean
+/subtract @Box_10x8x10 @Box_3x5x5
+
+# 5. Chimney
+/parametric cylinder 1 1 4
+/move 3 10 -2
+
+/view fit

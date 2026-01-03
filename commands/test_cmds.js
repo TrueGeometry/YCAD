@@ -164,7 +164,39 @@ export function getTestCommands(executor) {
                     { cmd: '/view iso', delay: 500 }, 
                     { cmd: '/view fit', delay: 1500, narration: txt.reset_view },
 
-                    // --- 9. Annotations, Tree & Data ---
+                    // --- 9. Revolve & Sweep ---
+                    { cmd: '/sketch_on XY', delay: 1500, narration: txt.revolve_setup },
+                    { cmd: '/sketch_draw circle 2', delay: 1000 },
+                    { cmd: '/sketch_off', delay: 500 },
+                    { cmd: '/move 5 0 0', delay: 500 }, // Offset profile
+                    { cmd: '/tag_last RevProfile', delay: 500 },
+
+                    { cmd: '/sketch_on XY', delay: 1000 },
+                    { cmd: '/sketch_draw line 0 -5 0 5', delay: 1000 }, // Axis on Y
+                    { cmd: '/sketch_off', delay: 500 },
+                    { cmd: '/tag_last RevAxis', delay: 500 },
+
+                    { cmd: '/revolve @RevProfile @RevAxis 270', delay: 3000, narration: txt.revolve_op },
+                    { cmd: '/move 0 10 0', delay: 1000 }, // Move away
+
+                    // Sweep
+                    { cmd: '/sketch_on XZ', delay: 1500, narration: txt.sweep_setup },
+                    { cmd: '/sketch_draw equation 10*sin(t) 10*cos(t) 0 3.14', delay: 1500 }, // Semicircle path
+                    { cmd: '/sketch_off', delay: 500 },
+                    { cmd: '/tag_last SwPath', delay: 500 },
+
+                    { cmd: '/sketch_on YZ', delay: 1000 },
+                    { cmd: '/sketch_draw rect 2 2', delay: 1000 },
+                    { cmd: '/sketch_off', delay: 500 },
+                    { cmd: '/move 0 0 10', delay: 1000 }, // Move to start point
+                    { cmd: '/tag_last SwProf', delay: 500 },
+
+                    { cmd: '/sweep_uniform @SwProf @SwPath', delay: 3000, narration: txt.sweep_op },
+
+                    { cmd: '/view iso', delay: 500 }, 
+                    { cmd: '/view fit', delay: 1500, narration: txt.reset_view },
+
+                    // --- 10. Annotations, Tree & Data ---
                     { cmd: '/annotate @Extrude_SketchRect Main_Part', delay: 2000, narration: txt.annot_add },
                     { cmd: '/hideannotations', delay: 1500, narration: txt.annot_hide },
                     { cmd: '/showannotations', delay: 1500, narration: txt.annot_show },
@@ -174,7 +206,7 @@ export function getTestCommands(executor) {
                     { cmd: '/delprop MaterialRef', delay: 2000, narration: txt.prop_del },
                     { cmd: '/tree', delay: 1000, narration: txt.tree_hide },
 
-                    // --- 10. Conclusion ---
+                    // --- 11. Conclusion ---
                     { cmd: '/save', delay: 2000, narration: txt.save_session },
                     { cmd: '/export_glb', delay: 2000, narration: txt.export_op },
                     { cmd: '/view iso', delay: 1500, narration: txt.final_iso },

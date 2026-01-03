@@ -1,0 +1,33 @@
+# Measuring Cup Design Script
+/view iso
+
+# 1. Cup Body
+/parametric cylinder 4 3.5 6
+/tag_last CupSolid
+
+# 2. Hollow Tool
+/parametric cylinder 3.6 3.1 8
+/move 0 1.5 0
+/tag_last CupHollow
+
+# 3. Spout
+/parametric cylinder 0.5 0.5 6
+/rotate 45 0 0
+/move 0 6 4
+/tag_last SpoutCutter
+
+# 4. Subtract
+/subtract @CupSolid @CupHollow @SpoutCutter
+/tag_last CupBody
+
+# 5. Handle
+/parametric torus 2.5 0.4
+/rotate 0 0 90
+/move 0 3 -3.5
+/tag_last Handle
+
+# 6. Union
+/union @CupBody @Handle
+/setprop @union_CupBody_Handle material plastic_clear
+
+/view fit

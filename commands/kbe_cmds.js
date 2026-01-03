@@ -10,7 +10,7 @@ const KBE_BASE_URL = "https://s3-us-west-2.amazonaws.com/pion.truegeometry.com/g
 export const kbeCommands = {
     '/kbe_model': {
         desc: 'Load a KBE Design Model (@Name)',
-        execute: (argRaw) => {
+        execute: (argRaw, cmdString) => {
             const cleanArg = argRaw.replace(/@/g, '').trim();
             if (!cleanArg) {
                 addMessageToChat('system', 'Usage: /KBE_model @Name<br>Example: /KBE_model @HelicalGear');
@@ -31,7 +31,7 @@ export const kbeCommands = {
                 const modelUrl = `${KBE_BASE_URL}${match.name}.glb`;
                 
                 // Load the model
-                loadAndDisplayGLB(modelUrl, 'replace');
+                loadAndDisplayGLB(modelUrl, 'replace', cmdString);
             } else {
                 // Fuzzy search suggestion
                 const suggestions = KBE_ASSETS

@@ -1,0 +1,20 @@
+# Wagon Wheel Design Script
+/view top
+
+# Hub
+/parametric cylinder 1.5 1.5 2
+
+# Rim
+/parametric torus 6 0.5
+/rotate 90 0 0
+
+# Spoke
+/parametric cylinder 0.3 0.3 4.5
+/rotate 0 0 90
+/move 3 0 0
+
+# Pattern
+/pattern circ 8 360 y
+
+/view iso
+/view fit

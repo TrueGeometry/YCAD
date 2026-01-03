@@ -1,0 +1,30 @@
+# Keychain Tag Design Script
+/view top
+
+# 1. Tag Body
+/parametric box 4 0.5 2
+/move 1 0 0
+/tag_last BodyRect
+/parametric cylinder 1 1 0.5
+/move -1 0 0
+/tag_last RoundEnd
+/union @BodyRect @RoundEnd
+/tag_last TagBase
+
+# 2. Keyring Hole
+/parametric cylinder 0.3 0.3 1
+/move -1 0 0
+/subtract @TagBase @Cylinder_0.3x0.3x1
+/tag_last FinalTag
+
+# 3. The Ring
+/parametric torus 0.8 0.1
+/move -1 0 0
+/setprop @Torus_0.8x0.1 material steel
+
+# 4. Label
+/annotate @FinalTag MY_KEYS
+/setprop @FinalTag color yellow
+
+/view iso
+/view fit

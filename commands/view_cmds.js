@@ -33,9 +33,15 @@ export const viewCommands = {
         }
     },
     '/tree': {
-        desc: 'Toggle Feature Tree',
-        execute: () => {
-            toggleFeatureTree();
+        desc: 'Toggle Feature Tree (or /tree rebuild)',
+        execute: async (argRaw) => {
+            if (argRaw && argRaw.trim().toLowerCase() === 'rebuild') {
+                // Dynamic import to avoid circular dependency with recorder.js -> commands.js
+                const { rebuildCurrentSession } = await import('../recorder.js');
+                await rebuildCurrentSession();
+            } else {
+                toggleFeatureTree();
+            }
         }
     },
     '/annotate': {

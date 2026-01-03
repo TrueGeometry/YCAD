@@ -33,9 +33,19 @@ Create 2D profiles on planes to be extruded into 3D.
 | Command | Description | Example |
 | :--- | :--- | :--- |
 | `/sketch_on [Plane]` | Enters sketch mode on a plane (XY, YZ, XZ or WorkPlane). | `/sketch_on XY`<br>`/sketch_on MyOffsetPlane` |
-| `/sketch_draw [type] [args]` | Draws a shape in the active sketch. | `/sketch_draw rect 10 5`<br>`/sketch_draw circle 3`<br>`/sketch_draw rounded_rect 10 5 1` |
-| `/sketch_draw equation` | Draws parametric curve `x(t), y(t)`. | `/sketch_draw equation 10*sin(t) 10*cos(t) 0 6.28` |
+| `/sketch_draw [type] [args]` | Draws a shape in the active sketch. | See **Sketch Shapes** below. |
 | `/sketch_off` | Exits sketch mode. | `/sketch_off` |
+
+### Sketch Shapes
+| Type | Arguments | Example |
+| :--- | :--- | :--- |
+| **line** | x1 y1 x2 y2 | `/sketch_draw line -5 0 5 0` |
+| **rect** | width height | `/sketch_draw rect 10 5` |
+| **rounded_rect** | width height radius | `/sketch_draw rounded_rect 10 5 1` |
+| **circle** | radius | `/sketch_draw circle 3` |
+| **ellipse** | xRadius yRadius | `/sketch_draw ellipse 4 2` |
+| **equation** | x(t) y(t) min max | `/sketch_draw equation 10*sin(t) 10*cos(t) 0 6.28` |
+| **composite** | JSON Array of segments | `/sketch_draw composite [{"type":"line","x":-6,"y":-2},{"type":"line","x":6,"y":-2},{"type":"line","x":6,"y":2.5},{"type":"line","x":3,"y":2.5},{"type":"line","x":0,"y":0},{"type":"line","x":-3,"y":2.5},{"type":"line","x":-6,"y":2.5},{"type":"line","x":-6,"y":-2}]` |
 
 ---
 
@@ -45,6 +55,7 @@ Transform 2D sketches into 3D and modify solids.
 | Command | Description | Example |
 | :--- | :--- | :--- |
 | `/extrude [@Sketch] [height]` | Extrudes a sketch into a solid. | `/extrude @SketchRect 10` |
+| `/revolve @Profile @Axis [angle]` | Revolves a profile around an axis line. | `/revolve @Circle @Line 360` |
 | `/subtract @Target @Tool` | Boolean Cut: Removes Tool from Target. | `/subtract @Box @Cylinder` |
 | `/union @Obj1 @Obj2` | Boolean Join: Merges objects. | `/union @Handle @Cup` |
 | `/intersect @Obj1 @Obj2` | Boolean Intersect: Keeps overlap. | `/intersect @A @B` |

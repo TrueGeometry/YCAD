@@ -1,0 +1,37 @@
+# Headphone Holder Design Script
+/view iso
+
+# 1. Mounting Plate
+/parametric box 6 0.5 6
+/move 0 0 0
+/tag_last MountPlate
+
+# 2. Vertical Arm
+/parametric box 2 6 1
+/move 0 -3.25 0
+/tag_last VertArm
+
+# 3. Curved Rest
+/parametric cylinder 2.5 2.5 4
+/rotate 0 0 90
+/move 0 -6 0
+/tag_last RestCyl
+
+# 4. End Cap
+/parametric cylinder 3.5 3.5 0.5
+/rotate 0 0 90
+/move 2 -6 0
+/tag_last EndCap
+
+# 5. Screw Holes
+/parametric cylinder 0.3 0.3 2
+/move -2 0 -2
+/pattern rect 2 2 4 4
+/subtract @MountPlate @Cylinder_0.3x0.3x2 @Cylinder_0.3x0.3x2_1_0 @Cylinder_0.3x0.3x2_0_1 @Cylinder_0.3x0.3x2_1_1
+/tag_last FinalPlate
+
+# 6. Assemble
+/union @FinalPlate @VertArm @RestCyl @EndCap
+/setprop @union_FinalPlate_VertArm_RestCyl_EndCap material abs_plastic
+
+/view fit

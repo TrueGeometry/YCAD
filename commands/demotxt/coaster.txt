@@ -1,0 +1,28 @@
+# Coaster Design Script
+/view top
+
+# 1. Base
+/parametric cylinder 5 5 0.4
+/tag_last CoasterBase
+
+# 2. Pattern Cutter
+/parametric cylinder 0.5 0.5 1
+/move 3 0 0
+/tag_last Hole
+/pattern circ 8 360 y
+
+# 3. Rim
+/parametric torus 5 0.3
+/rotate 90 0 0
+/tag_last Rim
+
+# 4. Subtract Holes
+/subtract @CoasterBase @Hole @Hole_c1 @Hole_c2 @Hole_c3 @Hole_c4 @Hole_c5 @Hole_c6 @Hole_c7
+/tag_last BasePerforated
+
+# 5. Union
+/union @BasePerforated @Rim
+/setprop @union_BasePerforated_Rim material cork
+
+/view iso
+/view fit

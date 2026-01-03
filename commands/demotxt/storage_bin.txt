@@ -1,0 +1,25 @@
+# Storage Bin Design Script
+/view top
+
+# 1. Base Block
+/parametric box 22 5 22
+/tag_last BinBase
+
+# 2. Single Compartment Cutter
+/parametric box 9 6 9
+/tag_last Cutter
+/move -5.5 1 -5.5
+
+# 3. Pattern Grid
+/pattern rect 2 2 11 11
+
+# 4. Subtract All
+/subtract @BinBase @Cutter @Cutter_1_0 @Cutter_0_1 @Cutter_1_1
+/tag_last FinalBin
+
+# 5. Style
+/setprop @FinalBin material heavy_duty_plastic
+/setprop @FinalBin color orange
+
+/view iso
+/view fit

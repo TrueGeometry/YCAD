@@ -9,7 +9,7 @@ import { getTaggableObjects } from '../viewer.js';
 export const patternCommands = {
     '/pattern': {
         desc: 'Create patterns (rect/circ)',
-        execute: (argRaw) => {
+        execute: (argRaw, cmdString) => {
             // Attempt to resolve target if @mention is present
             const { object, name } = resolveTarget(argRaw);
             
@@ -51,6 +51,7 @@ export const patternCommands = {
                         
                         clone.name = `${baseName}_${i}_${j}`;
                         clone.userData.filename = clone.name;
+                        clone.userData.cmd = cmdString; // Set pattern command
                         appState.scene.add(clone);
                         created++;
                     }
@@ -119,6 +120,7 @@ export const patternCommands = {
                     
                     clone.name = `${baseName}_c${i}`;
                     clone.userData.filename = clone.name;
+                    clone.userData.cmd = cmdString; // Set pattern command
                     appState.scene.add(clone);
                     created++;
                 }

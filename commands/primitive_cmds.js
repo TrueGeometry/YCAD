@@ -75,6 +75,17 @@ export const SHAPE_CONFIG = {
         factory: (p) => new THREE.TorusGeometry(p.radius, p.tube, 16, 64)
     },
     // --- 2D Sketch Shapes (Wireframes) ---
+    sketch_line: {
+        keys: ['x1', 'y1', 'x2', 'y2'],
+        defaults: [-2, 0, 2, 0],
+        factory: (p) => {
+             const points = [
+                 new THREE.Vector3(p.x1, p.y1, 0),
+                 new THREE.Vector3(p.x2, p.y2, 0)
+             ];
+             return new THREE.BufferGeometry().setFromPoints(points);
+        }
+    },
     sketch_rect: {
         keys: ['width', 'height'],
         defaults: [5, 3],
@@ -238,7 +249,7 @@ export function updateParametricMesh(mesh) {
 export const primitiveCommands = {
     '/parametric': {
         desc: 'Add parametric shape (cube, sphere, cylinder...)',
-        execute: (argRaw) => {
+        execute: (argRaw, cmdString) => {
             const args = argRaw.trim().split(/\s+/);
             let type = args[0].toLowerCase().replace(/^@/, '');
             
@@ -261,6 +272,7 @@ export const primitiveCommands = {
             mesh.userData.filename = mesh.name;
             mesh.userData.isParametric = true;
             mesh.userData.shapeType = type;
+            mesh.userData.cmd = cmdString || '/parametric ' + argRaw; // Store creation command
             Object.assign(mesh.userData, params);
             
             // Generate initial profile for primitives that support it (rect)

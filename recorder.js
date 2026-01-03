@@ -7,11 +7,14 @@ import { setCameraView, fitGeometryView, applyTheme, setTransformMode } from './
 import { toggleTool, toggleWireframe, toggleBoundingBox } from './tools.js';
 import { toggleSectionMode, updateSectionAxis, toggleSectionFlip } from './section.js';
 import { togglePropertiesMode } from './properties.js';
-import { toggleFeatureTree } from './tree.js';
+import { toggleFeatureTree, updateFeatureTree } from './tree.js';
 import { toggleCollisions } from './collisions.js';
 import { toggleOrigin } from './origin.js';
 import { addMessageToChat, toggleLoading } from './ui.js';
 import { applyStateToObject } from './loader.js';
+import { getBackendHost } from './utils.js';
+import { getSceneStructure } from './report.js';
+import { captureAnnotatedImage } from './capture.js';
 
 // --- Recording ---
 
@@ -46,7 +49,107 @@ export function downloadSession() {
     addMessageToChat('system', 'Session log saved to Downloads.');
 }
 
-// --- Restoring ---
+export async function saveToCloud() {
+    addMessageToChat('system', 'Saving to cloud...');
+    toggleLoading(true);
+
+    try {
+        // 1. Capture Data
+        const snapshot = captureAnnotatedImage(); // Returns Data URL
+        const tree = getSceneStructure();
+        const log = appState.actionLog;
+        const sessionId = appState.sessionId || 'session_' + Date.now();
+
+        const payload = {
+            sessionId,
+            createdAt: new Date().toISOString(),
+            log,
+            tree,
+            snapshot
+        };
+
+        // 2. Send to Server
+        const backendUrl = getBackendHost();
+        const response = await fetch(`${backendUrl}/agi/save`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (response.ok) {
+            const resData = await response.json().catch(() => ({}));
+            const serverId = resData.id || sessionId;
+            addMessageToChat('system', `✅ Saved to cloud successfully. <br><span style="font-size:0.8em; color:gray;">ID: ${serverId}</span>`);
+        } else {
+            throw new Error(`Server responded with ${response.status} ${response.statusText}`);
+        }
+
+    } catch (e) {
+        console.error("Cloud Save Error:", e);
+        addMessageToChat('system', `⚠️ Cloud save failed: ${e.message}`);
+    } finally {
+        toggleLoading(false);
+    }
+}
+
+// --- Restoring / Rebuilding ---
+
+function clearSceneForRebuild() {
+    const toRemove = [];
+    appState.scene.traverse(c => {
+        if (c.parent === appState.scene) {
+             // Logic to identify user objects (negation of system objects)
+             const isSystem = (c.name === 'GridHelper' || c.name === 'Origin' || c.name === 'Work Features' || 
+                               c.type.includes('Light') || c.type.includes('Camera') || c.type.includes('Control') || 
+                               (c.userData && c.userData.isSystem));
+             if (!isSystem) toRemove.push(c);
+        }
+    });
+    toRemove.forEach(c => {
+        appState.scene.remove(c);
+        if(c.geometry) c.geometry.dispose();
+    });
+    // Reset pointers
+    appState.currentDisplayObject = null;
+    appState.selectedObject = null;
+    if(appState.transformControls) appState.transformControls.detach();
+    updateFeatureTree();
+}
+
+export async function rebuildCurrentSession() {
+    if (appState.actionLog.length === 0) {
+        addMessageToChat('system', 'No history to rebuild.');
+        return;
+    }
+    
+    addMessageToChat('system', '🔨 <b>Rebuilding Scene...</b>');
+    toggleLoading(true);
+    
+    // Clear Scene
+    clearSceneForRebuild();
+    
+    // Replay
+    const log = [...appState.actionLog];
+    appState.isReplaying = true;
+    
+    try {
+        for (const action of log) {
+            // Skip View updates during rebuild to make it faster and stay focused
+            if (action.type === 'view') continue; 
+            
+            await replayAction(action);
+            // Minimal delay for stability
+            await new Promise(r => setTimeout(r, 10)); 
+        }
+        addMessageToChat('system', '✅ Rebuild Complete.');
+    } catch (e) {
+        console.error(e);
+        addMessageToChat('system', `⚠️ Rebuild error: ${e.message}`);
+    } finally {
+        appState.isReplaying = false;
+        toggleLoading(false);
+    }
+}
 
 export function uploadAndRestoreSession() {
     const input = document.createElement('input');
@@ -116,8 +219,8 @@ async function restoreSession(log) {
     toggleLoading(true);
     appState.isReplaying = true;
 
-    // Reset Scene via reload command equivalent (clearing logic handled in executeCommand usually, 
-    // but here we just process the log linearly. Ideally, the log starts with a load command).
+    // Reset Scene logic for restore (ensure clean slate)
+    clearSceneForRebuild();
     
     // Clear current log to avoid duplication if we save again immediately
     appState.actionLog = [];
@@ -126,7 +229,7 @@ async function restoreSession(log) {
         for (const action of log) {
             await replayAction(action);
             // Small delay to allow UI/Three.js to catch up visually
-            await new Promise(r => setTimeout(r, 100)); 
+            await new Promise(r => setTimeout(r, 50)); 
         }
         addMessageToChat('system', '✅ Session Restored Successfully.');
     } catch (e) {

@@ -14,7 +14,7 @@ import { updateFeatureTree } from './tree.js'; // Import update function
 
 const gltfLoader = new GLTFLoader();
 
-export async function loadAndDisplayGLB(url, mode = 'replace') {
+export async function loadAndDisplayGLB(url, mode = 'replace', cmdString = '') {
     const isAppend = mode === 'add';
     
     addMessageToChat('system', isAppend ? 'Adding 3D model to scene...' : 'Loading 3D model...');
@@ -81,6 +81,7 @@ export async function loadAndDisplayGLB(url, mode = 'replace') {
         // Store Metadata for Reports
         loadedModel.userData.sourceUrl = url;
         loadedModel.userData.filename = filename;
+        loadedModel.userData.cmd = cmdString || (isAppend ? `/add ${filename}` : `/load ${filename}`);
         
         // Enable shadows/casting for all meshes in the model
         loadedModel.traverse(child => {
@@ -162,6 +163,7 @@ export function createInitialCube() {
      cube.name = "fallback_cube";
      cube.userData.filename = "Default Cube";
      cube.userData.sourceUrl = "Generated";
+     cube.userData.cmd = "Initial State";
      cube.castShadow = true;
      cube.receiveShadow = true;
      

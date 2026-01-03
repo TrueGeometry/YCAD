@@ -1,0 +1,29 @@
+# Pen Holder Design Script
+/view iso
+
+# 1. Main Body
+/parametric cylinder 4 4 10
+/tag_last HolderSolid
+
+# 2. Hollow Tool
+/parametric cylinder 3.5 3.5 11
+/move 0 1 0
+/subtract @HolderSolid @Cylinder_3.5x3.5x11
+/tag_last Cup
+
+# 3. Decoration
+/parametric sphere 1
+/move 3.5 2 0
+/tag_last D1
+/parametric sphere 1
+/move 3.5 5 0
+/tag_last D2
+/parametric sphere 1
+/move 3.5 -2 0
+/tag_last D3
+
+# 4. Subtract Decoration
+/subtract @Cup @D1 @D2 @D3
+/setprop @subtract_Cup_D1_D2_D3 color teal
+
+/view fit

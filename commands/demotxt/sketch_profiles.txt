@@ -1,0 +1,31 @@
+# Advanced Sketch Profiles Script
+/view top
+
+# 1. V-Block using Composite Curve
+/sketch_on XY
+/sketch_draw composite [{"type":"line","x":-6,"y":-2},{"type":"line","x":6,"y":-2},{"type":"line","x":6,"y":2.5},{"type":"line","x":3,"y":2.5},{"type":"line","x":0,"y":0},{"type":"line","x":-3,"y":2.5},{"type":"line","x":-6,"y":2.5},{"type":"line","x":-6,"y":-2}]
+/sketch_off
+/move 0 8 0
+
+# 2. Slotted Plate using Primitives
+/sketch_on XY
+/sketch_draw rect 12 8
+/sketch_draw circle 2
+/sketch_draw rect 8 1
+/move 0 2.5 0
+/sketch_draw rect 8 1
+/move 0 -2.5 0
+/sketch_off
+/move 16 0 0
+
+# 3. Parametric Cam Profile
+/sketch_on XY
+/sketch_draw equation 0.3*(16*pow(sin(t),3)) 0.3*(13*cos(t)-5*cos(2*t)-2*cos(3*t)-cos(4*t)) 0 6.28
+/sketch_off
+
+# 4. Extrusion
+/view iso
+/extrude @SketchComposite 4
+/extrude @SketchRect 2
+
+/view fit

@@ -1,0 +1,74 @@
+# Flanged Elbow Design Script
+/view iso
+
+# 1. Path
+/sketch_on XY
+/sketch_draw equation 10*sin(t) 10*(1-cos(t)) 0 1.57
+/tag_last Path
+/sketch_off
+
+# 2. Profiles
+/sketch_on YZ
+/sketch_draw circle 3
+/tag_last OuterProfile
+/sketch_off
+/sketch_on YZ
+/sketch_draw circle 2
+/tag_last InnerProfile
+/sketch_off
+
+# 3. Sweeps
+/sweep_uniform @OuterProfile @Path solid align:z rot:0
+/tag_last PipeSolid
+/sweep_uniform @InnerProfile @Path solid align:z rot:0
+/tag_last PipeCore
+
+# 4. Flanges
+/parametric cylinder 5 5 1
+/rotate 0 0 -90
+/move 0 0 0
+/tag_last Flange1
+/parametric cylinder 5 5 1
+/move 10 10 0
+/tag_last Flange2
+
+# 5. Core Extensions
+/parametric cylinder 2 2 3
+/rotate 0 0 90
+/move 0 0 0
+/tag_last CoreExt1
+/parametric cylinder 2 2 3
+/move 10 10 0
+/tag_last CoreExt2
+
+# 6. Bolt Pattern 1
+/parametric cylinder 0.4 0.4 2
+/rotate 0 0 90
+/move 0 3.5 0
+/tag_last BoltCut1
+/pattern circ 4 360 x
+
+# 7. Bolt Pattern 2
+/workaxis offset Y X 10
+/parametric cylinder 0.4 0.4 2
+/move 10 10 3.5
+/tag_last BoltCut2
+/pattern circ 4 360 Y_Axis_Offset_X10
+
+# 8. Booleans
+/union @PipeSolid @Flange1 @Flange2
+/tag_last MainBody
+/subtract @MainBody @PipeCore @CoreExt1 @CoreExt2
+/tag_last HollowPipe
+/subtract @HollowPipe @BoltCut1 @BoltCut1_c1 @BoltCut1_c2 @BoltCut1_c3 @BoltCut2 @BoltCut2_c1 @BoltCut2_c2 @BoltCut2_c3
+/tag_last FinalElbow
+
+# 9. Boss
+/parametric cylinder 1.5 1.5 3
+/rotate 0 0 -45
+/move 7 3 0
+/union @FinalElbow @Cylinder_1.5x1.5x3
+
+/setprop @union_FinalElbow_Cylinder_1.5x1.5x3 material cast_iron
+/setprop @union_FinalElbow_Cylinder_1.5x1.5x3 color grey
+/view fit

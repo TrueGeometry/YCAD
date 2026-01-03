@@ -1,0 +1,36 @@
+# Cable Organizer Design Script
+/view iso
+
+# 1. Base
+/parametric box 10 3 3
+/move 0 1.5 0
+/tag_last Base
+
+# 2. Channel & Slot
+/parametric cylinder 0.6 0.6 4
+/rotate 90 0 0
+/move -3 2.5 0
+/tag_last Channel1
+/parametric box 0.8 2 4
+/move -3 3.5 0
+/tag_last Slot1
+/union @Channel1 @Slot1
+/tag_last MasterCutter
+
+# 3. Pattern
+/pattern rect 3 1 3 0
+
+# 4. Subtract
+/subtract @Base @MasterCutter @MasterCutter_1_0 @MasterCutter_2_0
+/tag_last CableClip
+
+# 5. Style
+/setprop @CableClip material silicone
+/setprop @CableClip color dark_grey
+
+# 6. Adhesive
+/parametric plane 10 3
+/rotate -90 0 0
+/setprop @Plane_10x3 color red
+
+/view fit

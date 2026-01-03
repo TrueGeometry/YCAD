@@ -1,0 +1,63 @@
+# Mounting Plate Design Script
+/view top
+
+# 1. Top Section
+/parametric cylinder 96 96 20
+/tag_last TopBody
+
+# 2. Bottom Section
+/parametric cylinder 54 54 20
+/move 0 -80 0
+/tag_last BotBody
+
+# 3. Neck
+/parametric box 150 80 20
+/move 0 -40 0
+/tag_last Neck
+
+# 4. Trimming Neck
+/parametric cylinder 40 40 30
+/move 130 -40 0
+/tag_last CutRight
+/parametric cylinder 40 40 30
+/move -130 -40 0
+/tag_last CutLeft
+/subtract @Neck @CutRight @CutLeft
+/tag_last NeckTrimmed
+
+# 5. Union Body
+/union @TopBody @BotBody @NeckTrimmed
+/tag_last PlateBody
+
+# 6. Top Holes
+/parametric cylinder 15 15 30
+/move 0 64 0
+/tag_last H_Top
+/parametric cylinder 15 15 30
+/move 55.42 32 0
+/tag_last H_Right
+/parametric cylinder 15 15 30
+/move -55.42 32 0
+/tag_last H_Left
+
+# 7. Bores
+/parametric cylinder 25 25 30
+/tag_last BoreTop
+/parametric cylinder 20 20 30
+/move 0 -80 0
+/tag_last BoreBot
+
+# 8. Slots
+/parametric cylinder 9 9 30
+/move 25 -90 0
+/tag_last Slot1
+/parametric cylinder 9 9 30
+/move -25 -90 0
+/tag_last Slot2
+
+# 9. Final Cut
+/subtract @PlateBody @H_Top @H_Right @H_Left @BoreTop @BoreBot @Slot1 @Slot2
+/setprop @subtract_PlateBody_H_Top_H_Right_H_Left_BoreTop_BoreBot_Slot1_Slot2 material steel
+
+/view iso
+/view fit

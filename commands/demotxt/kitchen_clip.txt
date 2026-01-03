@@ -1,0 +1,46 @@
+# Kitchen Clip Design Script
+/view front
+
+# 1. Hinge
+/parametric cylinder 0.8 0.8 4
+/rotate 90 0 0
+/tag_last HingePin
+
+# 2. Upper Arm
+/parametric box 12 0.6 3
+/move 0 0.8 0
+/rotate 0 0 5
+/tag_last UpperArm
+
+# 3. Lower Arm
+/parametric box 12 0.6 3
+/move 0 -0.8 0
+/rotate 0 0 -5
+/tag_last LowerArm
+
+# 4. Teeth
+/parametric cylinder 0.3 0.3 3
+/rotate 90 0 0
+/move 3 0.5 0
+/pattern rect 4 1 1.5 0
+
+/parametric cylinder 0.3 0.3 3
+/rotate 90 0 0
+/move 3.75 -0.5 0
+/pattern rect 3 1 1.5 0
+
+# 5. Spring
+/parametric torus 0.6 0.1
+/move 0 0 2
+/tag_last Spring1
+/parametric torus 0.6 0.1
+/move 0 0 -2
+/tag_last Spring2
+
+# 6. Style
+/setprop @UpperArm color red
+/setprop @LowerArm color red
+/setprop @HingePin color silver
+
+/view iso
+/view fit

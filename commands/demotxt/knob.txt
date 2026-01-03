@@ -1,0 +1,33 @@
+# Knurled Knob Design Script
+/view top
+
+# 1. Main Grip Body
+/parametric cylinder 4 4 3
+/tag_last KnobBody
+
+# 2. Knurl Cutter
+/parametric cylinder 0.8 0.8 4
+/move 4 0 0
+/tag_last Cutter
+
+# 3. Pattern
+/pattern circ 12 360 y
+
+# 4. Subtract Ridges
+/subtract @KnobBody @Cutter @Cutter_c1 @Cutter_c2 @Cutter_c3 @Cutter_c4 @Cutter_c5 @Cutter_c6 @Cutter_c7 @Cutter_c8 @Cutter_c9 @Cutter_c10 @Cutter_c11
+/tag_last KnurledGrip
+
+# 5. Hub
+/parametric cylinder 2 2 1
+/move 0 2 0
+/tag_last Hub
+/union @KnurledGrip @Hub
+/tag_last FinalKnob
+
+# 6. Shaft Hole
+/parametric cylinder 0.5 0.5 5
+/subtract @FinalKnob @Cylinder_0.5x0.5x5
+/setprop @subtract_FinalKnob_Cylinder_0.5x0.5x5 material plastic_black
+
+/view iso
+/view fit

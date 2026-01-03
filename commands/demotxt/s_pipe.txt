@@ -1,0 +1,26 @@
+# S-Pipe Design Script
+/view iso
+
+# 1. Path
+/sketch_on XY
+/sketch_draw equation t 5*sin(t*0.314) 0 20
+/tag_last S_Path
+/sketch_off
+
+# 2. Profile Plane
+/workplane angle YZ Z 57.5
+/tag_last ProfilePlane
+
+# 3. Profile
+/sketch_on ProfilePlane
+/sketch_draw circle 2
+/tag_last PipeProfile
+/sketch_off
+
+# 4. Sweep
+/sweep_uniform @PipeProfile @S_Path solid thick:0.4
+/tag_last HollowPipe
+
+# 5. Finish
+/setprop @HollowPipe color silver
+/view fit

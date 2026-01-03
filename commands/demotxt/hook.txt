@@ -1,0 +1,43 @@
+# Wall Hook Design Script
+/view iso
+
+# 1. Base Plate
+/parametric box 4 6 0.5
+/move 0 0 -0.25
+/tag_last BasePlate
+
+# 2. Hook Curve
+/parametric torus 1.5 0.3
+/rotate 90 0 0
+/tag_last Ring
+
+# 3. Cut to J-Shape
+/parametric box 4 2 2
+/move 0 1 0
+/subtract @Ring @Box_4x2x2
+/tag_last UShape
+
+# 4. Position
+/move 0 -1 1.5
+
+# 5. Tip Bulb
+/parametric sphere 0.4
+/move 0 0.5 3
+
+# 6. Screw Holes
+/parametric cylinder 0.2 0.2 1
+/rotate 90 0 0
+/move 0 2 0
+/tag_last TopHole
+/parametric cylinder 0.2 0.2 1
+/rotate 90 0 0
+/move 0 -2 0
+/tag_last BotHole
+/subtract @BasePlate @TopHole @BotHole
+
+# 7. Style
+/setprop @UShape material brass
+/setprop @Sphere_0.4 material brass
+/setprop @subtract_BasePlate_TopHole_BotHole material wood
+
+/view fit

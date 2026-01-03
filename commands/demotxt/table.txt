@@ -1,0 +1,20 @@
+# Table Design Script
+/view iso
+
+# 1. Create one leg
+/parametric cylinder 1 1 10
+/move -6 5 -4
+
+# 2. Pattern legs
+/pattern rect 2 2 12 8
+/view fit
+
+# 3. Create Top
+/parametric box 16 1 12
+/move 0 10.5 0
+
+# 4. Style
+/setprop @Box_16x1x12 material wood
+/annotate @Box_16x1x12 Table_Top
+
+/view iso

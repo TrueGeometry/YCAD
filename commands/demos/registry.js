@@ -38,6 +38,7 @@ import { SENSOR_DEMO } from './sensor.js';
 import { CORNER_HOUSING_DEMO } from './corner_housing.js';
 import { MOUNTING_PLATE_DEMO } from './mounting_plate.js';
 import { MOUNTING_PLATE_SKETCH_DEMO } from './mounting_plate_sketch.js';
+import { BOTTLE_DEMO } from './bottle.js';
 
 export const DEMO_REGISTRY = {
     'table': TABLE_DEMO,
@@ -107,7 +108,9 @@ export const DEMO_REGISTRY = {
     'plate': MOUNTING_PLATE_DEMO,
     'flange_plate': MOUNTING_PLATE_DEMO, // alias
     'plate_sketch': MOUNTING_PLATE_SKETCH_DEMO, // New Sketch Demo
-    'sketch_plate': MOUNTING_PLATE_SKETCH_DEMO  // alias
+    'sketch_plate': MOUNTING_PLATE_SKETCH_DEMO,  // alias
+    'bottle': BOTTLE_DEMO,
+    'flask': BOTTLE_DEMO // alias
 };
 
 export const DEMO_METADATA = {
@@ -149,5 +152,6 @@ export const DEMO_METADATA = {
     'sensor': { name: 'IoT Sensor', icon: 'radio' },
     'corner': { name: 'Corner Housing', icon: 'box-select' },
     'plate': { name: 'Mounting Plate', icon: 'settings' },
-    'plate_sketch': { name: 'Sketch Plate', icon: 'pen-tool' } // Metadata
+    'plate_sketch': { name: 'Sketch Plate', icon: 'pen-tool' },
+    'bottle': { name: 'Glass Bottle', icon: 'flask-conical' }
 };

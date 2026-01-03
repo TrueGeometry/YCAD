@@ -1,0 +1,31 @@
+# Swept Duct Design Script
+/view iso
+
+# 1. Path
+/sketch_on XY
+/sketch_draw equation 10*sin(t) 10*(1-cos(t)) 0 1.57
+/tag_last Path
+/sketch_off
+
+# 2. Start Profile
+/sketch_on YZ
+/sketch_draw rect 6 4
+/tag_last RectProfile
+/sketch_off
+
+# 3. End Profile
+/workplane offset XZ 10
+/sketch_on XZ_Plane_Offset_10
+/sketch_draw circle 2.5
+/tag_last CircProfile
+/sketch_off
+/move 10 0 0
+
+# 4. Sweep
+/sweep_variable @RectProfile @CircProfile @Path solid align:z rot:-45
+/tag_last SweepResult
+
+# 5. Finish
+/setprop @SweepResult color orange
+/setprop @SweepResult material plastic
+/view fit

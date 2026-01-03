@@ -1,0 +1,21 @@
+# Chair Design Script
+/view iso
+
+# 1. Seat
+/parametric box 6 1 6
+/move 0 4 0
+
+# 2. Legs
+/parametric box 0.8 4 0.8
+/move -2.5 2 -2.5
+/pattern rect 2 2 5 5
+
+# 3. Backrest
+/parametric box 6 6 1
+/move 0 7.5 -2.5
+
+# 4. Finish
+/view fit
+/rotate 0 45 0
+/annotate @Box_6x6x1 Backrest
+/view iso

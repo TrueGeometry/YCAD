@@ -1,0 +1,23 @@
+# Bookshelf Design Script
+/view iso
+
+# Sides
+/parametric box 1 8 4
+/move -2.5 4 0
+/parametric box 1 8 4
+/move 2.5 4 0
+
+# Shelves
+/parametric box 4 0.5 4
+/move 0 0.5 0
+/parametric box 4 0.5 4
+/move 0 4 0
+/parametric box 4 0.5 4
+/move 0 7.5 0
+
+# Top Cap
+/parametric box 6.5 0.5 4.5
+/move 0 8.25 0
+/setprop @Box_6.5x0.5x4.5 name Top_Cap
+
+/view fit

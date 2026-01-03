@@ -7,7 +7,7 @@ import { resolveTarget } from './utils.js';
 import { getTaggableObjects } from '../viewer.js';
 
 // Helper to handle deferred boolean logic
-function applySketchBoolean(op, targetRaw, toolRaw) {
+function applySketchBoolean(op, targetRaw, toolRaw, cmdString) {
     const { object: targetObj, name: targetName } = resolveTarget(targetRaw);
     const { object: toolObj, name: toolName } = resolveTarget(toolRaw);
 
@@ -48,7 +48,8 @@ function applySketchBoolean(op, targetRaw, toolRaw) {
     targetObj.userData.sketch_ops.push({
         type: op,
         profile: newProfile,
-        name: toolName
+        name: toolName,
+        cmd: cmdString
     });
 
     // Hide the tool to reduce visual clutter (simulate consumption)
@@ -60,7 +61,7 @@ function applySketchBoolean(op, targetRaw, toolRaw) {
 export const sketchCommands = {
     '/sketch_on': {
         desc: 'Start 2D Sketch on plane (Plane [Shape] [Params])',
-        execute: (argRaw) => {
+        execute: (argRaw, cmdString) => {
             // Usage: 
             // 1. /sketch_on XY
             // 2. /sketch_on XY rectangle 10 20
@@ -105,7 +106,7 @@ export const sketchCommands = {
                      return parseFloat(raw);
                 });
                 
-                createSketchShape(type, shapeArgs);
+                createSketchShape(type, shapeArgs, cmdString);
             }
         }
     },
@@ -117,7 +118,7 @@ export const sketchCommands = {
     },
     '/sketch_draw': {
         desc: 'Draw shape on active sketch (rect/circle/rounded_rect)',
-        execute: (argRaw) => {
+        execute: (argRaw, cmdString) => {
             const args = argRaw.trim().split(/\s+/);
             const typeRaw = args[0].toLowerCase();
             
@@ -142,33 +143,33 @@ export const sketchCommands = {
                  return parseFloat(raw);
             });
 
-            createSketchShape(type, shapeArgs);
+            createSketchShape(type, shapeArgs, cmdString);
         }
     },
     
     // --- Sketch Booleans (Deferred) ---
     '/sketch_union': {
         desc: 'Union Sketch B into A (@A @B)',
-        execute: (argRaw) => {
+        execute: (argRaw, cmdString) => {
             const args = argRaw.trim().split(/\s+/);
             if (args.length < 2) { addMessageToChat('system', 'Usage: /sketch_union @Target @Tool'); return; }
-            applySketchBoolean('union', args[0], args[1]);
+            applySketchBoolean('union', args[0], args[1], cmdString);
         }
     },
     '/sketch_subtract': {
         desc: 'Subtract Sketch B from A (@A @B)',
-        execute: (argRaw) => {
+        execute: (argRaw, cmdString) => {
             const args = argRaw.trim().split(/\s+/);
             if (args.length < 2) { addMessageToChat('system', 'Usage: /sketch_subtract @Target @Tool'); return; }
-            applySketchBoolean('subtract', args[0], args[1]);
+            applySketchBoolean('subtract', args[0], args[1], cmdString);
         }
     },
     '/sketch_intersect': {
         desc: 'Intersect Sketch A and B (@A @B)',
-        execute: (argRaw) => {
+        execute: (argRaw, cmdString) => {
             const args = argRaw.trim().split(/\s+/);
             if (args.length < 2) { addMessageToChat('system', 'Usage: /sketch_intersect @Target @Tool'); return; }
-            applySketchBoolean('intersect', args[0], args[1]);
+            applySketchBoolean('intersect', args[0], args[1], cmdString);
         }
     }
 };

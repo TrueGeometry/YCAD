@@ -1,0 +1,57 @@
+# Sliding Latch Design Script
+/view top
+
+# 1. Base Plate
+/parametric box 10 4 0.5
+/move 0 0 0
+/tag_last Base
+
+# 2. Bolt
+/parametric cylinder 0.6 0.6 8
+/rotate 0 0 90
+/move 0 0 1.5
+/tag_last Bolt
+
+# 3. Keepers
+/parametric box 2 2 2
+/tag_last KeeperBlock
+/parametric cylinder 0.7 0.7 3
+/rotate 0 0 90
+/tag_last KeeperHole
+/subtract @KeeperBlock @KeeperHole
+/tag_last Keeper1
+/move -3 0 1
+
+# Second Keeper
+/parametric box 2 2 2
+/parametric cylinder 0.7 0.7 3
+/rotate 0 0 90
+/subtract @Box_2x2x2 @Cylinder_0.7x0.7x3
+/move 2 0 1
+
+# 4. Handle
+/parametric cylinder 0.4 0.4 1.5
+/rotate 90 0 0
+/move -1 0 1.5
+/tag_last HandleStem
+/parametric sphere 0.6
+/move -1 0.75 1.5
+/tag_last HandleKnob
+
+# 5. Catch Plate
+/parametric box 3 4 0.5
+/move 7 0 0
+/parametric box 2 2 2
+/parametric cylinder 0.7 0.7 3
+/rotate 0 0 90
+/subtract @Box_2x2x2 @Cylinder_0.7x0.7x3
+/move 7 0 1
+
+# 6. Assemble Bolt
+/view iso
+/union @Bolt @HandleStem @HandleKnob
+/tag_last BoltAssembly
+/move 2 0 0
+/move -2 0 0
+
+/view fit

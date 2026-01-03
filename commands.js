@@ -68,10 +68,34 @@ const MODIFICATION_COMMANDS = [
     '/fillet', '/round'
 ];
 
+// Commands that should NOT be recorded in the session log (Meta-commands)
+const NO_RECORD_COMMANDS = [
+    '/tree rebuild',
+    '/save', 
+    '/download',
+    '/load',
+    '/restore',
+    '/export',
+    '/help',
+    '/h',
+    '/tg_test_ui' // Don't record test runs
+];
+
 function isDestructive(cmd) {
     if (MODIFICATION_COMMANDS.includes(cmd)) return true;
     if (cmd.startsWith('/parametric') || cmd.startsWith('/sketch')) return true;
     return false;
+}
+
+function shouldRecord(input) {
+    const lower = input.trim().toLowerCase();
+    // Check against blacklist
+    for (const cmd of NO_RECORD_COMMANDS) {
+        if (lower.startsWith(cmd)) return false;
+    }
+    // Also skip comments
+    if (lower.startsWith('//') || lower.startsWith('#')) return false;
+    return true;
 }
 
 export async function executeCommand(input) {
@@ -88,8 +112,12 @@ export async function executeCommand(input) {
              if (isDestructive(cmd)) pushUndoState();
         }
         
-        await def.execute(argRaw);
-        recordAction('cmd', input);
+        await def.execute(argRaw, input);
+        
+        // Only record if valid and not a meta-command
+        if (shouldRecord(input)) {
+            recordAction('cmd', input);
+        }
         
         return true;
     } else {
@@ -97,3 +125,6 @@ export async function executeCommand(input) {
         return false;
     }
 }
+
+// Expose to window for UI interactions
+window.executeCommand = executeCommand;

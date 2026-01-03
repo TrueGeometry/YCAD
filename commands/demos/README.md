@@ -52,9 +52,23 @@ You can use any command available in the application. Common ones for demos incl
 *   **Patterning**: `/pattern rect [cols] [rows]`, `/pattern circ [count]`
 *   **Boolean**: `/subtract @Target @Tool`, `/union @A @B`
 *   **Visuals**: `/setprop @Obj [key] [val]`, `/annotate @Obj [text]`, `/view [iso|top|front]`
+*   **Sketching**: `/sketch_on`, `/sketch_draw composite`, `/revolve`, `/sweep`
 
 ## Best Practices
 
 *   **Delays**: Add sufficient delays (1000ms - 3000ms) after commands that create objects or perform complex operations to allow the user to see what happened.
 *   **Narration**: Use the `narration` field to explain *what* is being built or *why* a specific command is used.
 *   **Cleanup**: The demo runner automatically clears the scene before starting, so you don't need to add delete commands at the start of your script.
+
+## Demo List
+*   `table`
+*   `chair`
+*   `house`
+*   `mug`
+*   `sketch`
+*   `profiles`
+*   `bridge`
+*   `car`
+*   `ship`
+*   `bottle`
+*   ... and more in `registry.js`

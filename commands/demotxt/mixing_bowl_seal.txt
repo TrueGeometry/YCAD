@@ -1,0 +1,35 @@
+# Mixing Bowl Seal Design Script
+/view iso
+
+# 1. Flexible Sheet
+/parametric cylinder 8 8 0.1
+/tag_last Sheet
+
+# 2. Outer Rim
+/parametric torus 8 0.4
+/rotate 90 0 0
+/tag_last Rim
+
+# 3. Inner Seal
+/parametric torus 7.5 0.3
+/rotate 90 0 0
+/move 0 -0.2 0
+/tag_last SealRing
+
+# 4. Tabs
+/parametric box 2 0.2 2
+/move 8.5 0 0
+/tag_last Tab1
+/parametric box 2 0.2 2
+/move -8.5 0 0
+/tag_last Tab2
+
+# 5. Union
+/union @Sheet @Rim @SealRing @Tab1 @Tab2
+/tag_last BowlLid
+
+# 6. Style
+/setprop @BowlLid material silicone_transparent
+/setprop @BowlLid color cyan
+
+/view fit

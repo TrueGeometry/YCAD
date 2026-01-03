@@ -1,0 +1,28 @@
+# Spoon Holder Design Script
+/view top
+
+# 1. Base
+/sketch_on XZ
+/sketch_draw circle 4
+/sketch_off
+/extrude @SketchCircle 1
+/tag_last Base
+
+# 2. Stem
+/parametric box 2 1.5 6
+/move 5 0.5 0
+/tag_last Stem
+
+# 3. Union
+/union @Base @Stem
+/tag_last RawBody
+
+# 4. Scoop
+/view iso
+/parametric sphere 3.5
+/move 0 3 0
+/subtract @RawBody @Sphere_3.5
+/tag_last SpoonRest
+
+/setprop @SpoonRest material ceramic_white
+/view fit
