@@ -1,0 +1,28 @@
+# Tutorial 08: Input/Output & Reporting
+# Save, Load, and Document your work.
+# Useful for: Sharing designs, 3D printing, BOM generation.
+
+# 1. Load Standard Parts (KBE)
+# Load a pre-defined engineering model
+/kbe_model @HelicalGear
+
+# 2. Import External Files
+# /add [url_to_glb]
+# /open (opens file dialog)
+
+# 3. Saving
+# /save local (Downloads JSON session)
+# /save cloud (Saves to server if configured)
+
+# 4. Exporting Geometry
+# Export for 3D Printing
+# /export_stl
+# Export for Web/AR
+# /export_glb
+
+# 5. Generate Report
+# Creates a PDF-ready HTML data sheet with views and BOM.
+# /report_gen
+
+/annotate @HelicalGear Ready_For_Export
+/view fit

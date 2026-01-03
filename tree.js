@@ -121,7 +121,16 @@ function createTreeNode(obj) {
     // Check for children
     let validChildren = [];
     if (obj.children) {
-        validChildren = obj.children.filter(c => c.type !== 'Bone' && c.type !== 'LineSegments'); // Exclude edge helpers 
+        validChildren = obj.children.filter(c => {
+            if (c.type === 'Bone') return false;
+            
+            // Allow LineSegments ONLY if they are parametric (e.g. MakerJS sketches)
+            // Otherwise exclude them (usually EdgesGeometry helpers)
+            if (c.type === 'LineSegments') {
+                return (c.userData && c.userData.isParametric);
+            }
+            return true;
+        }); 
     }
     const hasChildren = validChildren.length > 0;
 
@@ -247,11 +256,11 @@ function createTreeNode(obj) {
         document.querySelectorAll('.tree-item-content.selected').forEach(el => el.classList.remove('selected'));
         content.classList.add('selected');
         
-        // Allow selecting meshes (models), and Work Features.
+        // Allow selecting meshes (models), Work Features, and Parametric Sketches
         const isInteractive = (
             (obj.name === 'loaded_glb' || obj.name === 'fallback_cube') ||
             (obj.userData && (obj.userData.type === 'WorkPlane' || obj.userData.type === 'WorkAxis' || obj.userData.type === 'WorkPoint')) ||
-            (obj.userData && obj.userData.isParametric) // Select parametric shapes
+            (obj.userData && obj.userData.isParametric) // Select parametric shapes/sketches
         );
 
         if (isInteractive) {
@@ -313,7 +322,7 @@ function renderPropertiesList(container, obj) {
     
     Object.keys(obj.userData).forEach(key => {
         // Hide internal system keys
-        if (key === 'filename' || key === 'sourceUrl' || key === 'type' || key === 'isParametric' || key === 'shapeType') return;
+        if (key === 'filename' || key === 'sourceUrl' || key === 'type' || key === 'isParametric' || key === 'shapeType' || key === 'profile' || key === 'sketch_ops') return;
         
         const row = document.createElement('li');
         row.className = 'prop-row';
@@ -405,7 +414,7 @@ function getIconForType(obj) {
     if (type.includes('Camera')) return 'camera';
     if (type === 'Mesh') return 'box';
     if (type === 'Group' || type === 'Object3D' || type === 'Scene') return 'folder';
-    if (type === 'LineSegments') return 'minus';
+    if (type === 'LineSegments' || type === 'Line' || type === 'LineLoop') return 'pencil';
     return 'circle';
 }
 

@@ -13,7 +13,8 @@ import { kbeCommands } from './commands/kbe_cmds.js';
 import { primitiveCommands } from './commands/primitive_cmds.js'; 
 import { sketchCommands } from './commands/sketch_cmds.js'; 
 import { csgCommands } from './commands/csg_cmds.js'; 
-import { filletCommands } from './commands/fillet_cmds.js'; // Import Fillet
+import { filletCommands } from './commands/fillet_cmds.js'; 
+import { makerCommands } from './commands/maker_cmds.js'; // Import MakerJS
 import { getTestCommands } from './commands/test_cmds.js';
 import { recordAction } from './recorder.js'; 
 import { pushUndoState } from './history.js'; 
@@ -30,7 +31,8 @@ const COMMAND_REGISTRY = {
     ...primitiveCommands, 
     ...sketchCommands,    
     ...csgCommands,       
-    ...filletCommands,    // Register Fillet
+    ...filletCommands,    
+    ...makerCommands,     // Register MakerJS
     ...getTestCommands((cmd) => executeCommand(cmd)),
 
     '/help': {
@@ -65,7 +67,7 @@ const MODIFICATION_COMMANDS = [
     '/pattern', '/workplane', '/workaxis', '/kbe_model',
     '/extrude', '/subtract', '/union', '/intersect',
     '/sketch_on', '/sketch_draw', '/annotate', '/annotate clear',
-    '/fillet', '/round'
+    '/fillet', '/round', '/makerjs'
 ];
 
 // Commands that should NOT be recorded in the session log (Meta-commands)

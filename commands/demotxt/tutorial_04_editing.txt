@@ -1,0 +1,42 @@
+# Tutorial 04: Editing & Manipulation
+# Modify existing objects.
+# Useful for: Assembly, adjustment, and detailing.
+
+/view iso
+
+# Setup: Create two objects
+/parametric cube 5
+/tag_last BlockA
+/parametric cube 3
+/move 6 0 0
+/tag_last BlockB
+
+# 1. Transformations
+# /move x y z (Absolute position)
+/move 0 2.5 0
+# /rotate x y z (Degrees)
+/rotate 0 45 0
+# /scale x y z
+/scale 1 2 1
+
+# 2. Docking (Snap)
+# Move BlockB next to BlockA automatically
+/dock @BlockB @BlockA
+
+# 3. Fillet (Rounding Edges)
+# Only works on parametric primitives (Box/Cube)
+/fillet @BlockB 0.5
+
+# 4. Properties
+# Set metadata for reports or visual style
+/setprop @BlockA material steel
+/setprop @BlockA color #ff0000
+/setprop @BlockA part_number 101-A
+
+# 5. Duplication & Deletion
+/duplicate @BlockA
+/move -6 2.5 0
+/rename_last BlockC
+/delete @BlockB
+
+/view fit

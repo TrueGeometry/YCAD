@@ -1,0 +1,30 @@
+# Tutorial 05: Patterning
+# Create arrays of objects.
+# Useful for: Bolt holes, fence posts, gear teeth, architectural grids.
+
+/view top
+
+# 1. Setup Source Object
+/parametric cylinder 1 1 2
+/move 0 1 0
+/tag_last Pin
+
+# 2. Rectangular Pattern
+# Syntax: /pattern rect [cols] [rows] [distX] [distZ]
+# Creates a grid starting from the source position.
+/pattern rect 4 2 3 4
+# Result: 4 columns spaced by 3, 2 rows spaced by 4.
+
+# 3. Circular Pattern
+# Setup source for circular array (needs offset from center)
+/parametric box 1 4 1
+/move 10 2 0
+/tag_last Spoke
+
+# Syntax: /pattern circ [count] [angle] [axis]
+# Patterns around the global origin (0,0,0) by default.
+/pattern circ 8 360 y
+# Result: 8 spokes rotated 360 degrees around Y axis.
+
+/view iso
+/view fit

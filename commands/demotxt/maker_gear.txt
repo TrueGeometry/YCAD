@@ -1,0 +1,22 @@
+# Maker.js Gear Demo
+# Demonstrates generating a parametric gear profile and extruding it.
+
+# 1. Setup View
+/view top
+/sketch_on XY
+
+# 2. Generate Gear Profile
+# Creates a 12-tooth cog
+/makerjs gear 12 50
+
+# 3. Extrude
+# The makerjs command creates loops. 
+# We need to select the outer loop (usually created last or first).
+# Let's assume standard selection behavior: /makerjs selects the last loop.
+/extrude @MakerShape_Loop_0 5
+
+# 4. Finish
+/view iso
+/setprop @Extrude_MakerShape_Loop_0 color #fbbf24
+/setprop @Extrude_MakerShape_Loop_0 material brass
+/view fit

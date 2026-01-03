@@ -1,0 +1,35 @@
+# Tutorial 02: Sketching
+# Learn how to draw 2D profiles on planes.
+# Useful for: Custom cross-sections, floor plans, and complex extrusion profiles.
+
+/view top
+
+# 1. Select a Plane
+# You can sketch on XY (Front), XZ (Top), or YZ (Right).
+/sketch_on XZ
+
+# 2. Draw Basic Shapes
+# Rectangle: /sketch_draw rect [width] [height]
+/sketch_draw rect 10 6
+/tag_last MyBase
+
+# Circle: /sketch_draw circle [radius]
+/sketch_draw circle 1.5
+# Shapes are drawn at (0,0) of the plane. Move them locally.
+/move 3 0 0 
+
+# 3. Draw Parametric Equation
+# Example: A sine wave curve
+# Syntax: /sketch_draw equation x(t) y(t) min max
+/sketch_draw equation t 2*sin(t) -5 5
+/move 0 5 0
+
+# 4. Composite Profile (Advanced)
+# JSON format for custom point lists
+/sketch_draw composite [{"type":"line","x":-8,"y":-8},{"type":"line","x":-6,"y":-8},{"type":"line","x":-7,"y":-6},{"type":"line","x":-8,"y":-8}]
+
+# 5. Finish
+/sketch_off
+
+/view iso
+# These sketches are now ready for Extrusion!

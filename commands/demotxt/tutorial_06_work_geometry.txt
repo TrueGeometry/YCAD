@@ -1,0 +1,34 @@
+# Tutorial 06: Work Geometry
+# Create reference geometry for complex sketches.
+# Useful for: Sketching on angled faces, offset mounting plates.
+
+/view iso
+/origin
+
+# 1. Offset Plane
+# Create a plane parallel to XY but moved forward.
+/workplane offset XY 10
+# Now you can sketch on it:
+/sketch_on XY_Plane_Offset_10
+/sketch_draw circle 3
+/sketch_off
+/extrude @SketchCircle 1
+
+# 2. Rotated Plane
+# Create a plane angled 45 degrees relative to XY, rotating around X axis.
+/workplane angle XY X 45
+# Sketch on the angled plane:
+/sketch_on XY_Plane_Rot_45
+/sketch_draw rect 5 8
+/sketch_off
+/extrude @SketchRect 2
+
+# 3. Work Axis
+# Create a reference axis for patterning or rotation
+/workaxis offset Y X 15
+# Usage in pattern:
+/parametric sphere 1
+/move 18 0 0
+/pattern circ 4 180 Y_Axis_Offset_X15
+
+/view fit

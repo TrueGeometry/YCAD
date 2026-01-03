@@ -419,20 +419,14 @@ function getVisibleBounds() {
     if (!appState.scene) return { box, hasContent };
 
     appState.scene.traverse(child => {
-        if (!child.visible) return;
-
-        // Skip System Types
-        if (child.type === 'GridHelper' || child.type === 'AxesHelper' || child.type.includes('Control') || child.type.includes('Camera') || child.type.includes('Light')) return;
-        // Skip System Names
-        if (child.name === 'GridHelper' || child.name === 'Origin' || child.name === 'Work Features') return;
-        // Skip System Flags
-        if (child.userData && child.userData.isSystem) return;
-        
-        // Skip specific helpers
-        if (child.type === 'Box3Helper' || child.type === 'PlaneHelper') return;
-
-        // Include Meshes and Lines (Sketches)
-        if (child.isMesh || child.isLine) {
+        if (child.visible && (child.isMesh || child.isGroup)) {
+             // Exclude system
+             if (child.name === 'GridHelper' || child.name === 'Origin' || child.name === 'Work Features') return;
+             if (child.type.includes('Control') || child.type.includes('Camera') || child.type.includes('Light')) return;
+             
+             // System flag check
+             if (child.userData && child.userData.isSystem) return;
+             
              const objBox = new THREE.Box3().setFromObject(child);
              if (!objBox.isEmpty()) {
                  box.union(objBox);
@@ -502,7 +496,9 @@ export function getTaggableObjects() {
         if (child.type.includes('Light') || child.type.includes('Camera') || child.type.includes('Control')) return;
         
         // Exclude Lines UNLESS they are Parametric Sketches (have userData.isParametric)
-        const isSketch = (child.type === 'Line' || child.type === 'LineLoop') && child.userData && child.userData.isParametric;
+        // Fixed: Include LineSegments so MakerJS geometries are selectable/taggable
+        const isSketch = (child.type === 'Line' || child.type === 'LineLoop' || child.type === 'LineSegments') && child.userData && child.userData.isParametric;
+
         if (!isSketch && (child.type === 'LineSegments' || child.type === 'Line' || child.type === 'LineLoop')) return;
 
         // Interactive Roots

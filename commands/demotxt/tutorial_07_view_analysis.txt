@@ -1,0 +1,40 @@
+# Tutorial 07: View & Analysis
+# Inspect your model.
+# Useful for: Checking fit, measuring dimensions, generating BOM.
+
+/view iso
+
+# Setup: A hollow box
+/parametric box 10 10 10
+/parametric box 8 12 8
+/subtract @Box_10x10x10 @Box_8x12x8
+/tag_last HollowBox
+
+# 1. Section View
+# Slice the model to see inside.
+/section y
+# (Use /section off to disable)
+
+# 2. Measurement
+# Measure distance between points (approximate for tutorial)
+/measure dist -5 5 5 5 5 5
+
+# 3. Physical Properties
+# Calculate Mass, Volume, Surface Area
+/setprop @HollowBox material steel
+/props @HollowBox
+
+# 4. Bounding Box
+# Check overall dimensions
+/bounds
+
+# 5. Visual Styles
+/wireframe
+# (Use /wireframe again to toggle off)
+
+# 6. Annotations
+# Add 3D labels
+/annotate @HollowBox Main_Housing
+
+/section off
+/view fit

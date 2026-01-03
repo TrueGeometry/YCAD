@@ -1,0 +1,38 @@
+# Tutorial 01: Parametric Primitives
+# Learn how to create basic 3D building blocks.
+# Useful for: Rapid prototyping, block-outs, and simple mechanical parts.
+
+/view iso
+
+# 1. Cube & Box
+# Syntax: /parametric [type] [dimensions...]
+# Great for: Walls, bases, brackets.
+/parametric cube 5
+/move -8 0 0
+/parametric box 4 8 2
+/move -8 0 5
+
+# 2. Cylinders & Cones
+# Great for: Shafts, pipes, pins.
+/parametric cylinder 3 3 8
+/move 0 4 0
+/parametric cone 3 5
+/move 0 9 0
+
+# 3. Sphere & Torus
+# Great for: Joints, knobs, O-rings.
+/parametric sphere 3
+/move 8 3 0
+/parametric torus 2 0.5
+/move 8 3 0
+/rotate 90 0 0
+
+# 4. Plane (Reference)
+/parametric plane 20 20
+/rotate -90 0 0
+/move 0 -2 0
+/setprop @Plane_20x20 color #cccccc
+/setprop @Plane_20x20 opacity 0.5
+
+/view fit
+# Try clicking an object and using the gizmo to move it manually!

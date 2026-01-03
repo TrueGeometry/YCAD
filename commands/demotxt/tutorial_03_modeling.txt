@@ -1,0 +1,38 @@
+# Tutorial 03: Modeling Operations
+# Transform sketches into solids and combine shapes.
+# Useful for: Mechanical design, machining simulation.
+
+/view iso
+
+# --- Part 1: Extrusion ---
+# Create a profile
+/sketch_on XZ
+/sketch_draw rounded_rect 8 8 1
+/sketch_off
+# Extrude it up
+/extrude @SketchRounded_rect 2
+/tag_last Plate
+
+# --- Part 2: Boolean Subtract (Drilling) ---
+# Create a tool
+/parametric cylinder 2 2 5
+/tag_last DrillBit
+# Perform Cut: /subtract @Target @Tool
+/subtract @Plate @DrillBit
+/tag_last HoledPlate
+
+# --- Part 3: Revolve ---
+# Create a profile on XY plane
+/sketch_on XY
+/sketch_draw composite [{"type":"line","x":5,"y":0},{"type":"line","x":8,"y":0},{"type":"line","x":8,"y":5},{"type":"line","x":6,"y":8},{"type":"line","x":5,"y":8},{"type":"line","x":5,"y":0}]
+/tag_last RevProfile
+# Create an Axis line
+/sketch_draw line 0 -2 0 10
+/tag_last RevAxis
+/sketch_off
+
+# Revolve 360 degrees
+/revolve @RevProfile @RevAxis 360
+/tag_last Vase
+
+/view fit
